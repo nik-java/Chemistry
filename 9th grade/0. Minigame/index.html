@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Die Chemie-Heldenreise – 3D Edition</title>
+<style>
+:root{--void:#0a0705;--stone:#1c140d;--ember:#e2872f;--ember-hot:#ff7a3d;--blood:#8a2020;--gold:#c9a24a;--parchment:#ecdfc0;--pdim:#c8b98f;--line:#5b432a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--void);color:var(--parchment);font-family:Georgia,'Times New Roman',serif}
+h1,h2,.logo,.badge,.action,.primary,.gender button,.hero h2,#heroName,.tag,.node,.story h2{font-family:'Trajan Pro','Cinzel',Georgia,serif;font-variant:small-caps}
+button{font:inherit;cursor:pointer}
+.screen{display:none;min-height:100vh}.screen.active{display:flex}
+
+#start,#end{align-items:center;justify-content:center;padding:24px;
+ background:radial-gradient(ellipse at 18% -10%,#4a2f1699,transparent 55%),radial-gradient(ellipse at 82% -10%,#4a2f1699,transparent 55%),radial-gradient(circle at 50% 130%,#241a0f,var(--void) 62%)}
+.panel{width:min(1200px,96vw);position:relative;background:linear-gradient(180deg,#1d150ef5,#120d08f7);border:1px solid var(--line);border-radius:6px;padding:34px;box-shadow:0 0 0 1px #000,0 30px 90px #000c,inset 0 0 60px #00000066}
+.panel:before,.panel:after{content:"";position:absolute;top:14px;bottom:14px;width:3px;background:linear-gradient(var(--gold),transparent 40%,transparent 60%,var(--gold));opacity:.7}
+.panel:before{left:14px}.panel:after{right:14px}
+.logo{text-align:center;font-size:clamp(1.7rem,5vw,3.4rem);font-weight:900;letter-spacing:.03em;color:var(--parchment);text-shadow:0 0 18px #e2872f66,0 2px 0 #000;margin-bottom:6px}
+.sub{text-align:center;color:var(--pdim);font-size:1.05rem;font-style:italic;font-variant:normal}
+
+.heroes{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:30px 0}
+.hero{padding:14px;border:1px solid #4a3521;border-radius:8px;background:radial-gradient(ellipse at 50% 18%,#2c2013,#150f09 75%);position:relative;transition:.25s}
+.hero:before{content:"";position:absolute;inset:6px;border:1px solid #6b4d2a4d;border-radius:5px;pointer-events:none}
+.hero:hover,.hero.selected{border-color:var(--ember);box-shadow:0 0 24px #e2872f55,inset 0 0 20px #e2872f22;transform:translateY(-4px)}
+.avatar{height:180px;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 14px 10px #000a)}
+.avatar svg{height:172px;max-width:160px}
+.hero h2{text-align:center;color:var(--gold);letter-spacing:.03em;font-size:1.02rem;margin:6px 0 4px}
+.hero p{text-align:center;color:var(--pdim);min-height:42px;font-size:.9rem;font-variant:normal}
+.gender button{width:100%;padding:10px;border:1px solid var(--line);background:linear-gradient(#241a10,#170f08);color:var(--parchment);border-radius:6px;letter-spacing:.02em;font-size:.82rem}
+.gender button:hover{border-color:var(--ember)}
+.gender button.sel{background:linear-gradient(#6b4a20,#3c2810);border-color:var(--gold);color:#fff}
+
+.primary{border:1px solid var(--gold);border-radius:6px;padding:13px 28px;color:#1a1208;background:linear-gradient(180deg,#e9c369,#b9863a);font-weight:700;letter-spacing:.03em;box-shadow:0 4px 0 #6b4a1e,0 8px 18px #000a}
+.primary:disabled{filter:grayscale(.6) brightness(.6);box-shadow:none}
+.primary:not(:disabled):hover{filter:brightness(1.08)}
+
+#game{padding:10px;justify-content:center}
+.wrap{width:min(1400px,100%);display:grid;grid-template-columns:220px 1fr;grid-template-rows:auto 1fr auto;gap:10px}
+
+.hud{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:16px;background:linear-gradient(180deg,#241a10,#140e08);border:1px solid var(--line);border-radius:8px;padding:9px 16px;box-shadow:inset 0 0 20px #0008}
+.mini{display:flex;align-items:center;gap:12px}
+.miniAvatar{font-size:1.9rem;width:50px;height:50px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle,#3a2814,#160f08);border:2px solid var(--gold);box-shadow:0 0 12px #e2872f66}
+#heroName{color:var(--gold);letter-spacing:.03em}
+.bars{width:min(360px,42vw)}
+.label{display:flex;justify-content:space-between;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--pdim);font-family:Georgia,serif;font-variant:normal}
+.bar{height:14px;background:#1a120b;border:1px solid #000;border-radius:20px;overflow:hidden;box-shadow:inset 0 2px 4px #000a,0 0 0 1px #6b4d2a4d}
+.bar div{height:100%;background:linear-gradient(90deg,#7a1c1c,#e2872f);transition:.4s;box-shadow:inset 0 2px 4px #fff3}
+.bar.shake{animation:shake .45s}
+.xp{height:6px;background:#1a120b;border:1px solid #000;border-radius:10px;overflow:hidden}
+.xp div{height:100%;background:linear-gradient(90deg,#4a5f8c,#c9a24a);width:0;transition:.4s}
+.tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:3px}
+.tag{font-size:.65rem;border:1px solid var(--gold);background:#2c2013;color:var(--gold);border-radius:3px;padding:3px 7px;letter-spacing:.02em}
+
+.sidebar{background:linear-gradient(160deg,#e9dcb8,#d8c79d);border:1px solid #7a6a45;border-radius:4px;padding:12px;color:#3a2c16;position:relative;box-shadow:0 8px 20px #0007}
+.sidebar:before{content:"";position:absolute;inset:5px;border:1px dashed #a5906099;pointer-events:none}
+.sidebar h3{margin:2px 0 10px;color:#5c3f1c;font-size:.9rem;letter-spacing:.04em;text-align:center}
+.map{height:400px;position:relative;overflow:hidden;border-radius:2px;background:radial-gradient(ellipse at 30% 20%,#0000000f,transparent 40%),radial-gradient(ellipse at 70% 70%,#00000012,transparent 45%),linear-gradient(160deg,#e6d7ad,#cdb887)}
+.node{position:absolute;z-index:2;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#5c4020,#2c1c0c);border:2px solid #7a5a30;color:#e8d9ab;font-size:1rem;box-shadow:0 3px 6px #0006}
+.node.current{background:radial-gradient(circle,#e2872f,#8a4a12);border-color:#ffcf80;box-shadow:0 0 18px #e2872f}
+.node.done{background:radial-gradient(circle,#4a6a3a,#213816);border-color:#8ac96e}
+.n1{left:8%;bottom:8%}.n2{left:36%;top:46%}.n3{right:22%;top:22%}.n4{right:6%;bottom:10%}
+.mapPath{color:#5c3f1c;font-size:.75rem;text-align:center;margin-top:8px;font-style:italic}
+
+.main{position:relative;min-height:440px;overflow:hidden;border-radius:8px;border:10px solid transparent;border-image:linear-gradient(155deg,#5a3c1c,#1c130a 40%,#1c130a 60%,#5a3c1c) 1;background:#050302;box-shadow:0 0 0 1px #000,inset 0 0 60px #000c,0 20px 60px #000a}
+#c3d{position:absolute;inset:0;width:100%;height:100%;display:block}
+.archL,.archR{position:absolute;top:-4%;bottom:-4%;width:9%;z-index:4;pointer-events:none}
+.archL{left:-2%;background:linear-gradient(90deg,#0a0704,#0a070400)}
+.archR{right:-2%;background:linear-gradient(270deg,#0a0704,#0a070400)}
+.vignette{position:absolute;inset:0;z-index:5;pointer-events:none;box-shadow:inset 0 0 130px 40px #000a}
+.story{position:absolute;z-index:8;left:16px;right:16px;bottom:14px;background:linear-gradient(180deg,#231708f2,#140d05f7);border:1px solid var(--gold);border-radius:6px;padding:14px 18px;box-shadow:0 10px 30px #000a,inset 0 0 20px #00000066}
+.story h2{margin:0 0 6px;color:var(--gold);font-size:1.02rem;letter-spacing:.03em}
+.story p{margin:0;line-height:1.5;color:var(--parchment);font-size:.96rem;font-variant:normal}
+@keyframes shake{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(5px)}}
+
+.controls{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;background:linear-gradient(180deg,#1c130a,#120b06);border:1px solid var(--line);border-radius:8px;padding:10px}
+.action{border:1px solid var(--gold);background:linear-gradient(180deg,#3a2814,#1c1206);color:var(--parchment);border-radius:6px;padding:12px 16px;letter-spacing:.02em;box-shadow:0 3px 0 #000,0 6px 14px #0006}
+.action:hover{background:linear-gradient(180deg,#4a3418,#241608);border-color:var(--ember-hot);transform:translateY(-1px)}
+.action:active{transform:translateY(1px)}
+
+.modal{display:none;position:fixed;z-index:20;inset:0;background:#000000cc;align-items:center;justify-content:center;padding:20px}
+.modal.open{display:flex}
+.question{width:min(800px,96vw);background:linear-gradient(160deg,#efe2bd,#ddc99a);border:1px solid #7a5a2c;border-radius:6px;padding:26px;color:#2c2010;box-shadow:0 30px 90px #000c,inset 0 0 0 6px #f7edcf,inset 0 0 0 8px #a5824a}
+.badge{color:#8a4a12;text-transform:uppercase;letter-spacing:.14em;font:700 .76rem Georgia,serif}
+.question h2{color:#5c3416;margin:8px 0 10px}
+.question p{color:#3a2c16;line-height:1.5;font-variant:normal}
+.answers{display:grid;gap:9px;margin-top:18px}
+.answers button{padding:13px 16px;text-align:left;border:1px solid #8a6a3a;background:linear-gradient(180deg,#faf1d6,#ecdcb0);color:#2c2010;border-radius:5px;font-size:1rem;font-variant:normal}
+.answers button:hover:not(:disabled){border-color:#8a4a12;background:linear-gradient(180deg,#fff6db,#f2e2b6)}
+.answers button:disabled{opacity:.7}
+.feedback{display:none;margin-top:13px;padding:12px;border-radius:5px;background:#e2d3a5;border:1px solid #a5824a;color:#2c2010;font-variant:normal}
+.feedback.show{display:block}
+.toast{position:fixed;z-index:30;top:18px;left:50%;transform:translate(-50%,-100px);background:linear-gradient(180deg,#3a2814,#1c1206);border:1px solid var(--blood);color:#f0d0c0;border-radius:6px;padding:11px 20px;transition:.3s;letter-spacing:.02em}
+.toast.show{transform:translate(-50%,0)}
+
+@media(max-width:1024px){
+ .heroes{grid-template-columns:repeat(2,1fr)}
+ .avatar{height:140px}.avatar svg{height:132px;max-width:120px}
+ .wrap{grid-template-columns:1fr;grid-template-rows:auto auto auto auto}
+ .sidebar{order:3}.main{order:2;min-height:360px}.controls{order:4}
+ .hud{flex-wrap:wrap;row-gap:10px}
+ .bars{width:100%}
+ .story{padding:10px 14px}
+ .story h2{font-size:.92rem}
+ .story p{font-size:.85rem;line-height:1.4}
+ .archL,.archR{width:6%}
+ .map{height:280px}
+}
+@media(max-width:600px){.heroes{grid-template-columns:1fr}.bars{width:100%}.hud{flex-wrap:wrap}.archL,.archR{width:5%}.main{min-height:300px}.story{left:10px;right:10px;bottom:10px;padding:9px 12px}.story h2{font-size:.85rem}.story p{font-size:.8rem}.logo{letter-spacing:.01em}}
+</style></head><body>
+
+<section id="start" class="screen active"><div class="panel"><div class="logo">⚔️ DIE CHEMIE-HELDENREISE ⚡</div><p class="sub">Wähle deinen Helden. Bestehe die Prüfungen zu Stoffen, Teilchen und chemischen Reaktionen (Klasse 8). Besiege den Drachen.</p>
+<div class="heroes">
+
+<div class="hero"><div class="avatar"><svg viewBox="0 0 160 190"><circle cx="80" cy="55" r="27" fill="#c88761"/><path fill="#34271f" d="M53 53q7-35 30-29 25-4 28 30l-12-13-8 8-10-10-9 10z"/><path fill="#9ba7bd" d="M57 55h46v18H57z"/><path fill="#6d432e" d="M45 84h70v70H45z"/><path fill="#b8c4d4" d="M39 91l-25 18 10 39 30-9z"/><path fill="#d9b04f" d="M112 91l15 8-6 69-9-3z"/><path fill="#cdd5df" d="M117 98l7 3 5-52 8 1-6 61-12 1z"/></svg></div><h2>Ritter</h2><p>Starker Nahkämpfer mit Schild und Schwert.</p><div class="gender"><button data-kind="Ritter">⚔️ Ritter wählen</button></div></div>
+
+<div class="hero"><div class="avatar"><svg viewBox="0 0 160 190"><circle cx="80" cy="55" r="27" fill="#c98763"/><path fill="#4b211e" d="M51 66Q35 25 80 17q45 8 29 49l-15-20-12 12-12-12z"/><path fill="#9ba7bd" d="M53 55h54v17H53z"/><path fill="#583c66" d="M43 84h74v75H43z"/><path fill="#b8c4d4" d="M43 91L15 110l14 38 28-12z"/><path fill="#d7b04f" d="M117 86l7 8-13 74-8-2z"/><path fill="#d7dce4" d="M116 91l8 3 6-52 8 1-7 61-13 2z"/></svg></div><h2>Kriegerin</h2><p>Bewegliche Kämpferin mit Schild und Schwert.</p><div class="gender"><button data-kind="Kriegerin">🛡️ Kriegerin wählen</button></div></div>
+
+<div class="hero"><div class="avatar"><svg viewBox="0 0 160 190"><circle cx="80" cy="55" r="25" fill="#bd7d5c"/><path fill="#25203b" d="M45 55L80 8l35 47z"/><path fill="#d6c2a1" d="M51 77h58v13H51z"/><path fill="#3c487c" d="M43 85h74l15 75H28z"/><path fill="#a87b42" d="M118 88l8 2-8 76-9-1z"/><circle cx="121" cy="87" r="8" fill="#9b6fff"/></svg></div><h2>Zauberer</h2><p>Beherrscht Stoffe, Teilchen und Magie.</p><div class="gender"><button data-kind="Zauberer">🔮 Zauberer wählen</button></div></div>
+
+<div class="hero"><div class="avatar"><svg viewBox="0 0 160 190"><circle cx="80" cy="55" r="25" fill="#c98a68"/><path fill="#9a385e" d="M50 65Q34 27 80 14q46 13 30 51l-14-19-16 11-13-11z"/><path fill="#f0d6bd" d="M51 77h58v13H51z"/><path fill="#633b78" d="M43 85h74l15 75H28z"/><path fill="#a87b42" d="M118 88l8 2-8 76-9-1z"/><circle cx="121" cy="87" r="8" fill="#71b7ff"/></svg></div><h2>Magierin</h2><p>Beherrscht Stoffe, Teilchen und Magie.</p><div class="gender"><button data-kind="Magierin">✨ Magierin wählen</button></div></div>
+</div>
+<p id="chosen" class="sub" style="color:#e7bd62">Wähle eine Figur.</p><div style="text-align:center"><button id="startBtn" class="primary" disabled>🌲 Heldenreise beginnen</button></div></div></section>
+
+<section id="game" class="screen"><div class="wrap"><div class="hud"><div class="mini"><span id="miniAvatar" class="miniAvatar">⚔️</span><div><b id="heroName"></b><div class="tags" id="tags"></div></div></div><div class="bars"><div class="label"><span>❤️ Leben</span><b id="hpText">100 / 100</b></div><div id="hpbar" class="bar"><div></div></div><div class="label"><span>⭐ XP</span><b id="xpText">0 / 100</b></div><div class="xp"><div id="xpbar"></div></div></div></div>
+<aside class="sidebar"><h3>🗺️ Heldenreise</h3><div class="map"><div id="n1" class="node n1">🌲</div><div id="n2" class="node n2">👹</div><div id="n3" class="node n3">⚔️</div><div id="n4" class="node n4">🐉</div></div><p class="mapPath">Wald → Troll → Schmiede → Drachenberg</p></aside>
+<main class="main">
+ <canvas id="c3d"></canvas>
+ <div class="archL"></div><div class="archR"></div><div class="vignette"></div>
+ <div class="story"><h2 id="title"></h2><p id="story"></p></div>
+</main>
+<div id="controls" class="controls"></div></div></section>
+
+<div id="modal" class="modal"><div class="question"><div class="badge">🧪 Chemieprüfung</div><h2 id="qtitle"></h2><p id="qtext"></p><div id="answers" class="answers"></div><div id="feedback" class="feedback"></div></div></div><div id="toast" class="toast"></div>
+<section id="end" class="screen"><div class="panel" style="text-align:center"><div style="font-size:8rem">🏆🐉</div><h1>Der Drache ist besiegt!</h1><p id="endText" class="sub"></p><button class="primary" onclick="location.reload()">↻ Neue Heldenreise</button></div></section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);let H={kind:"",hp:100,xp:0,items:[]},P=null;
+const Q={
+t1:["Das Rätsel des Trolls","Der Troll öffnet ein Fläschchen Parfüm in der Höhle. Nach kurzer Zeit riecht es im ganzen Raum danach, obwohl niemand die Luft bewegt hat. Wie erklärt das Teilchenmodell dieses Phänomen?",["Die Duftteilchen bewegen sich von selbst und verteilen sich (Diffusion).","Die Luft verwandelt sich in Duftstoff.","Der Duft wird durch Magie übertragen.","Die Teilchen stehen still, nur der Troll bewegt sich."],0,"Teilchen sind ständig in Bewegung und verteilen sich von selbst im Raum – das nennt man Diffusion.",25],
+t2:["Die Keule des Trolls","Der Troll zeigt dir Wasser aus einer Quelle. Woran erkennt man, dass es sich um einen Reinstoff handelt?",["Es schmeckt besonders gut.","Seine Stoffeigenschaften (z. B. Siedetemperatur) sind immer gleich.","Es ist durchsichtig.","Es lässt sich färben."],1,"Ein Reinstoff hat stets gleichbleibende, charakteristische Stoffeigenschaften wie eine feste Schmelz- und Siedetemperatur.",30],
+bridge:["Die Brücke aus Eisen","Der Wächter reicht dir einen Becher Milch. Feine Fetttröpfchen schweben darin fein verteilt in Wasser. Wie nennt man diesen Gemischtyp?",["Eine Lösung","Eine Emulsion","Ein Element","Ein Reinstoff"],1,"Fein verteilte Flüssigkeitströpfchen in einer anderen Flüssigkeit nennt man Emulsion (z. B. Milch, Mayonnaise).",20],
+shield:["Die Schmiede des Schildes","Der Schmied hat einen schwarzen Filzstiftpunkt auf Papier getropft und Wasser aufsaugen lassen. Die Farbe zerläuft in mehrere bunte Ringe. Welches Trennverfahren ist das?",["Destillieren","Filtrieren","Chromatographie","Sedimentieren"],2,"Bei der Chromatographie wandern verschiedene Farbstoffe unterschiedlich schnell mit dem Wasser und werden so sichtbar getrennt.",20],
+staff:["Der Stab der Trennkunst","Der Zauberer will aus einem Gemisch aus Wasser und Alkohol den Alkohol gewinnen. Beide Stoffe haben unterschiedliche Siedetemperaturen. Welches Trennverfahren nutzt er?",["Filtrieren","Destillieren","Sieben","Dekantieren"],1,"Beim Destillieren wird das Gemisch erhitzt: Der Stoff mit der niedrigeren Siedetemperatur verdampft zuerst und wird getrennt aufgefangen.",20],
+sword:["Die Klinge der Legierung","Der Schmied stellt aus Kupfer und Zink eine harte, goldfarbene Metallmischung für die Klinge her. Wie nennt man so ein homogenes Gemisch aus Metallen?",["Ein Element","Eine Legierung","Eine Emulsion","Ein Reinstoff"],1,"Eine Mischung aus zwei oder mehr Metallen nennt man Legierung – Kupfer und Zink ergeben zum Beispiel Messing.",25],
+cloak:["Der Mantel des Wassers","Die Magierin zerlegt Wasser mit Strom in Wasserstoff und Sauerstoff. Ist Wasser damit ein Element oder eine Verbindung?",["Ein Element, da es ein Reinstoff ist.","Eine Verbindung, da es sich in zwei andere Stoffe zerlegen lässt.","Ein Gemisch aus Wasserstoff und Sauerstoff.","Keins von beidem, da es flüssig ist."],1,"Da sich Wasser chemisch in zwei andere Stoffe (Wasserstoff und Sauerstoff) zerlegen lässt, ist es eine Verbindung, kein Element.",25],
+d1:["Der erste Atem des Drachen","Der Drache bewacht die Trinkwasseraufbereitung des Bergsees. Mit welchem physikalischen Trennverfahren werden Schwebstoffe aus dem Wasser entfernt, bevor es als Trinkwasser genutzt wird?",["Destillieren","Filtrieren","Chromatographie","Extrahieren"],1,"Bei der Trinkwasseraufbereitung werden Schwebstoffe unter anderem durch Filtrieren aus dem Wasser entfernt.",40],
+d2:["Der zweite Atem des Drachen","Wenn der Drache Feuer speit, wird Wärme an die Umgebung abgegeben. Wie nennt man eine chemische Reaktion, bei der Wärme freigesetzt wird?",["Endotherme Reaktion","Exotherme Reaktion","Neutrale Reaktion","Physikalische Reaktion"],1,"Wird bei einer chemischen Reaktion Wärme an die Umgebung abgegeben, nennt man sie exotherm.",45],
+d3:["Die letzte Prüfung des Drachen","Der Drache gibt dir ein Gemisch aus Sand und Kochsalz. Sand löst sich nicht in Wasser, Salz dagegen schon. Wie trennst du die beiden Stoffe vollständig?",["Wasser zugeben, den Sand herausfiltrieren, dann das Salzwasser eindampfen.","Nur sieben.","Nur filtrieren, ohne Wasser zuzugeben.","Nur eindampfen, ohne vorher zu filtrieren."],0,"Erst löst sich das Salz im Wasser, der Sand wird herausfiltriert; aus dem Filtrat gewinnt man das Salz durch Eindampfen zurück.",50]
+};
+
+/* ---------- 3D-Szene (Three.js) ---------- */
+let renderer,sceneT,camera,weaponGroup,playerGroup,armShoulder,shieldMesh=null,cloakMesh=null,swordBlade=null,staffGem=null,enemyGroup=null,torchLights=[],flameMeshes=[],emberGeo,emberPos,dragonWings=[];
+let inited=false,swingState={active:false,t0:0,magic:false},shakeState={active:false,t0:0},hitState={active:false,t0:0},dieState={active:false,t0:0};
+let lastT=0;
+
+function faceTexHuman(kind){
+ const c=document.createElement("canvas");c.width=c.height=128;const ctx=c.getContext("2d");
+ ctx.clearRect(0,0,128,128);
+ const female=kind==="Kriegerin"||kind==="Magierin";
+ const browCol=kind==="Zauberer"?"#c8c4b8":(female?"#3a2418":"#241810");
+ ctx.strokeStyle=browCol;ctx.lineWidth=5;ctx.lineCap="round";
+ ctx.beginPath();ctx.moveTo(30,46);ctx.quadraticCurveTo(42,female?38:40,54,45);ctx.stroke();
+ ctx.beginPath();ctx.moveTo(74,45);ctx.quadraticCurveTo(86,female?38:40,98,46);ctx.stroke();
+ ["#fff","#fff"].forEach((c1,i)=>{const cx=i===0?42:86;ctx.fillStyle="#fff";ctx.beginPath();ctx.ellipse(cx,60,11,female?8:7,0,0,Math.PI*2);ctx.fill()});
+ const irisCol=kind==="Ritter"?"#5a7a8a":kind==="Kriegerin"?"#6a4a2a":kind==="Zauberer"?"#4a7ab0":"#5aa0c0";
+ [42,86].forEach(cx=>{ctx.fillStyle=irisCol;ctx.beginPath();ctx.arc(cx,60,5.5,0,Math.PI*2);ctx.fill();ctx.fillStyle="#0c0805";ctx.beginPath();ctx.arc(cx,60,2.6,0,Math.PI*2);ctx.fill()});
+ if(female){ctx.strokeStyle="#241810";ctx.lineWidth=2;[42,86].forEach(cx=>{ctx.beginPath();ctx.moveTo(cx-10,54);ctx.lineTo(cx-13,50);ctx.moveTo(cx+10,54);ctx.lineTo(cx+13,50);ctx.stroke()})}
+ ctx.strokeStyle="#8a5a42";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(64,66);ctx.lineTo(60,84);ctx.lineTo(66,86);ctx.stroke();
+ ctx.strokeStyle=female?"#a8564a":"#7a4438";ctx.lineWidth=female?5:4;ctx.lineCap="round";
+ ctx.beginPath();ctx.moveTo(50,98);ctx.quadraticCurveTo(64,female?107:104,78,98);ctx.stroke();
+ if(kind==="Zauberer"){ctx.strokeStyle="#d8d4c8";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(28,72);ctx.quadraticCurveTo(64,84,100,72);ctx.stroke()}
+ return new THREE.CanvasTexture(c);
+}
+function noiseTex(size,r,g,b,variance,rep){
+ const c=document.createElement("canvas");c.width=c.height=size;
+ const ctx=c.getContext("2d");const img=ctx.createImageData(size,size);
+ for(let i=0;i<size*size;i++){
+   const n=(Math.random()-0.5)*variance*255;
+   img.data[i*4]=Math.min(255,Math.max(0,r*255+n));
+   img.data[i*4+1]=Math.min(255,Math.max(0,g*255+n));
+   img.data[i*4+2]=Math.min(255,Math.max(0,b*255+n));
+   img.data[i*4+3]=255;
+ }
+ ctx.putImageData(img,0,0);
+ const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;
+ if(rep)t.repeat.set(rep,rep);
+ return t;
+}
+function faceTex(kind){
+ const c=document.createElement("canvas");c.width=c.height=160;const ctx=c.getContext("2d");
+ ctx.clearRect(0,0,160,160);
+ if(kind==="troll"){
+   ctx.fillStyle="#6b8a4a";ctx.beginPath();ctx.ellipse(80,90,58,55,0,0,Math.PI*2);ctx.fill();
+   ctx.strokeStyle="#3c5228";ctx.lineWidth=6;
+   ctx.beginPath();ctx.moveTo(30,58);ctx.lineTo(62,66);ctx.stroke();
+   ctx.beginPath();ctx.moveTo(98,66);ctx.lineTo(130,58);ctx.stroke();
+   ctx.fillStyle="#ffe066";
+   ctx.beginPath();ctx.ellipse(52,78,13,10,0,0,Math.PI*2);ctx.fill();
+   ctx.beginPath();ctx.ellipse(108,78,13,10,0,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle="#241c10";
+   ctx.beginPath();ctx.arc(52,80,5,0,Math.PI*2);ctx.fill();
+   ctx.beginPath();ctx.arc(108,80,5,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle="#4a6234";ctx.beginPath();ctx.ellipse(80,108,16,10,0,0,Math.PI*2);ctx.fill();
+   ctx.strokeStyle="#241c10";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(52,132);ctx.quadraticCurveTo(80,145,108,132);ctx.stroke();
+   ctx.fillStyle="#e8e0c8";
+   ctx.beginPath();ctx.moveTo(66,130);ctx.lineTo(70,148);ctx.lineTo(74,130);ctx.fill();
+   ctx.beginPath();ctx.moveTo(86,130);ctx.lineTo(90,148);ctx.lineTo(94,130);ctx.fill();
+ }else if(kind==="dragon"){
+   ctx.fillStyle="#8a2a2a";ctx.beginPath();ctx.ellipse(80,80,60,60,0,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle="#ffcc33";
+   ctx.beginPath();ctx.ellipse(48,70,14,9,-0.15,0,Math.PI*2);ctx.fill();
+   ctx.beginPath();ctx.ellipse(112,70,14,9,0.15,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle="#1a0805";
+   ctx.beginPath();ctx.ellipse(48,70,3,7,0,0,Math.PI*2);ctx.fill();
+   ctx.beginPath();ctx.ellipse(112,70,3,7,0,0,Math.PI*2);ctx.fill();
+   ctx.strokeStyle="#3a1010";ctx.lineWidth=4;
+   ctx.beginPath();ctx.moveTo(20,55);ctx.quadraticCurveTo(48,40,76,52);ctx.stroke();
+   ctx.beginPath();ctx.moveTo(84,52);ctx.quadraticCurveTo(112,40,140,55);ctx.stroke();
+   for(let i=0;i<40;i++){ctx.strokeStyle="rgba(0,0,0,0.15)";ctx.lineWidth=1.5;const x=Math.random()*160,y=Math.random()*160;ctx.beginPath();ctx.arc(x,y,4+Math.random()*4,0,Math.PI*2);ctx.stroke()}
+ }
+ return new THREE.CanvasTexture(c);
+}
+function leafMatFor(hex){
+ return new THREE.MeshStandardMaterial({color:hex,roughness:0.85,flatShading:true,map:noiseTex(32,((hex>>16)&255)/255,((hex>>8)&255)/255,(hex&255)/255,0.14,1)});
+}
+function makeTree(x,z,h,seed){
+ const g=new THREE.Group();
+ const barkTex=noiseTex(32,0.22,0.15,0.09,0.25,2);
+ const trunkMat=new THREE.MeshStandardMaterial({color:0x4a3018,roughness:1,map:barkTex});
+ const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.2,h,7),trunkMat);
+ trunk.position.y=h/2;g.add(trunk);
+ [-1,1].forEach(s=>{
+   const branch=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.06,0.5,5),trunkMat);
+   branch.position.set(s*0.18,h*0.72,0);branch.rotation.z=s*0.9;g.add(branch);
+ });
+ const leafHue=0.27+((seed*37)%10)/110;
+ const leafColor=new THREE.Color().setHSL(leafHue,0.58,0.4+((seed*13)%10)/90).getHex();
+ const leafMat=leafMatFor(leafColor);
+ for(let i=0;i<7;i++){
+   const s=0.55-((seed+i)%3)*0.06;
+   const foliage=new THREE.Mesh(new THREE.IcosahedronGeometry(s,0),leafMat);
+   foliage.position.set(((seed*i)%7-3)*0.16,h+i*0.26,((seed+i*3)%7-3)*0.16);
+   foliage.rotation.set(seed*i,seed,i);
+   g.add(foliage);
+ }
+ g.position.set(x,0,z);
+ return g;
+}
+function makeRock(x,z,s){
+ const rockTex=noiseTex(32,0.32,0.3,0.28,0.3,2);
+ const rockMat=new THREE.MeshStandardMaterial({color:0x555049,roughness:1,map:rockTex,flatShading:true});
+ const rock=new THREE.Mesh(new THREE.IcosahedronGeometry(s,0),rockMat);
+ rock.position.set(x,s*0.55,z);rock.rotation.set(Math.random()*3,Math.random()*3,Math.random()*3);
+ return rock;
+}
+
+function init3D(){
+ const canvas=$("c3d");
+ renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+ renderer.shadowMap.enabled=true;
+ sceneT=new THREE.Scene();
+ sceneT.background=new THREE.Color(0x0d1524);
+ sceneT.fog=new THREE.FogExp2(0x0d1524,0.05);
+ camera=new THREE.PerspectiveCamera(60,1,0.1,100);
+ camera.position.set(0,1.6,5);
+
+ sceneT.add(new THREE.AmbientLight(0x445577,0.6));
+ sceneT.add(new THREE.HemisphereLight(0x8fa8c0,0x1a2a14,0.5));
+ const moonLight=new THREE.DirectionalLight(0xbcd0ff,0.65);
+ moonLight.position.set(4,9,-3);moonLight.castShadow=true;
+ moonLight.shadow.mapSize.set(1024,1024);
+ moonLight.shadow.camera.left=-15;moonLight.shadow.camera.right=15;
+ moonLight.shadow.camera.top=15;moonLight.shadow.camera.bottom=-15;moonLight.shadow.camera.far=60;
+ sceneT.add(moonLight);
+
+ const groundTex=noiseTex(64,0.13,0.19,0.1,0.35,18);
+ const ground=new THREE.Mesh(new THREE.PlaneGeometry(40,90),new THREE.MeshStandardMaterial({color:0x223019,roughness:1,map:groundTex}));
+ ground.rotation.x=-Math.PI/2;ground.position.z=-25;ground.receiveShadow=true;
+ sceneT.add(ground);
+
+ for(let i=0;i<9;i++){
+   const z=-i*4-2;
+   [-1,1].forEach(side=>{
+     if(i<6){
+       const h=1.6+Math.random()*1.6;
+       const t=makeTree(side*(2.6+Math.random()*0.9),z+Math.random()*1.4,h,i*7+side+3);
+       sceneT.add(t);
+     }else{
+       const rock=makeRock(side*(2.7+Math.random()*0.8),z+Math.random()*1.4,0.5+Math.random()*0.6);
+       sceneT.add(rock);
+     }
+   });
+ }
+
+ const moon=new THREE.Mesh(new THREE.SphereGeometry(1.7,24,24),new THREE.MeshBasicMaterial({color:0xf4edd2}));
+ moon.position.set(6,10,-32);sceneT.add(moon);
+
+ [-2.6,2.6].forEach(x=>{
+   const post=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.09,1.4,6),new THREE.MeshStandardMaterial({color:0x2a1c10}));
+   post.position.set(x,0.7,-1.4);sceneT.add(post);
+   const flame=new THREE.Mesh(new THREE.SphereGeometry(0.14,8,8),new THREE.MeshBasicMaterial({color:0xffa233}));
+   flame.position.set(x,1.5,-1.4);sceneT.add(flame);flameMeshes.push(flame);
+   const pl=new THREE.PointLight(0xff9440,2.4,9,2);pl.position.copy(flame.position);sceneT.add(pl);torchLights.push(pl);
+ });
+
+ const N=70;emberPos=new Float32Array(N*3);
+ for(let i=0;i<N;i++){emberPos[i*3]=(Math.random()-0.5)*6;emberPos[i*3+1]=Math.random()*3;emberPos[i*3+2]=-Math.random()*10-1;}
+ emberGeo=new THREE.BufferGeometry();
+ emberGeo.setAttribute("position",new THREE.BufferAttribute(emberPos,3));
+ const embers=new THREE.Points(emberGeo,new THREE.PointsMaterial({color:0xffa64a,size:0.055,transparent:true,opacity:0.85}));
+ sceneT.add(embers);
+
+ weaponGroup=new THREE.Group();
+ playerGroup=new THREE.Group();
+ playerGroup.position.set(0,0,2.7);
+ sceneT.add(playerGroup);
+ sceneT.add(camera);
+ camera.position.set(0,2.25,5.3);
+
+ resize3D();
+ window.addEventListener("resize",resize3D);
+ lastT=performance.now();
+ renderer.setAnimationLoop(loop3D);
+}
+function resize3D(){
+ const el=$("c3d").parentElement;
+ const w=el.clientWidth||800,h=el.clientHeight||440;
+ renderer.setSize(w,h,false);
+ camera.aspect=w/h;camera.updateProjectionMatrix();
+}
+function capsule(r,h,mat){
+ const g=new THREE.Group();
+ g.add(new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,10),mat));
+ const top=new THREE.Mesh(new THREE.SphereGeometry(r,10,8),mat);top.position.y=h/2;g.add(top);
+ const bot=new THREE.Mesh(new THREE.SphereGeometry(r,10,8),mat);bot.position.y=-h/2;g.add(bot);
+ return g;
+}
+function buildPlayerModel(kind){
+ playerGroup.clear();
+ const magic=["Zauberer","Magierin"].includes(kind);
+ const female=["Kriegerin","Magierin"].includes(kind);
+ const skinTex=noiseTex(24,0.85,0.63,0.44,0.1,3);
+ const skinMat=new THREE.MeshStandardMaterial({color:0xd9a06c,roughness:0.85,map:skinTex});
+ const armorColor=kind==="Ritter"?0x7a8492:kind==="Kriegerin"?0x8a6a44:kind==="Zauberer"?0x342a54:0x4a3364;
+ const clothTex=noiseTex(24,((armorColor>>16)&255)/255,((armorColor>>8)&255)/255,(armorColor&255)/255,0.12,3);
+ const bodyMat=new THREE.MeshStandardMaterial({color:armorColor,roughness:magic?0.75:0.45,metalness:magic?0.05:0.55,map:clothTex});
+ const hairColor=female?0x3a2418:0x241810;
+ const hairMat=new THREE.MeshStandardMaterial({color:hairColor,roughness:0.9});
+ const trimMat=new THREE.MeshStandardMaterial({color:kind==="Ritter"?0xb03030:kind==="Kriegerin"?0xc9a24a:kind==="Zauberer"?0x8b5cff:0x5cc7ff,roughness:0.5,emissive:0x000000});
+ const bootMat=new THREE.MeshStandardMaterial({color:0x241810,roughness:0.8});
+
+ // Rumpf & Hals
+ const torso=capsule(0.29,0.62,bodyMat);torso.position.y=1.18;playerGroup.add(torso);
+ const neck=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.1,0.14,8),skinMat);neck.position.y=1.58;playerGroup.add(neck);
+ const belt=new THREE.Mesh(new THREE.TorusGeometry(0.3,0.035,6,16),bootMat);belt.rotation.x=Math.PI/2;belt.position.y=0.92;playerGroup.add(belt);
+
+ // Kopf
+ const head=new THREE.Mesh(new THREE.SphereGeometry(0.21,16,16),skinMat);head.position.y=1.78;playerGroup.add(head);
+ const face=new THREE.Mesh(new THREE.PlaneGeometry(0.32,0.32),new THREE.MeshStandardMaterial({map:faceTexHuman(kind),transparent:true,roughness:1}));
+ face.position.set(0,1.775,0.203);playerGroup.add(face);
+
+ // Beine (Ober-/Unterschenkel) + Stiefel
+ [-0.15,0.15].forEach(x=>{
+   const thigh=capsule(0.105,0.36,bodyMat);thigh.position.set(x,0.66,0);playerGroup.add(thigh);
+   const shin=capsule(0.09,0.34,bodyMat);shin.position.set(x,0.28,0.03);shin.rotation.x=-0.08;playerGroup.add(shin);
+   const boot=new THREE.Mesh(new THREE.BoxGeometry(0.16,0.14,0.28),bootMat);boot.position.set(x,0.08,0.06);playerGroup.add(boot);
+ });
+
+ // linker Arm (Ober-/Unterarm) + Hand
+ const shoulderL=new THREE.Group();shoulderL.position.set(-0.38,1.46,0);playerGroup.add(shoulderL);
+ const upperL=capsule(0.09,0.32,bodyMat);upperL.position.set(0,-0.16,0);upperL.rotation.z=0.35;shoulderL.add(upperL);
+ const foreL=capsule(0.078,0.3,skinMat);foreL.position.set(-0.13,-0.42,0.04);foreL.rotation.z=0.15;shoulderL.add(foreL);
+ const handL=new THREE.Mesh(new THREE.SphereGeometry(0.075,10,10),skinMat);handL.position.set(-0.19,-0.6,0.06);shoulderL.add(handL);
+
+ // rechter Arm (hält Waffe)
+ const shoulderR=new THREE.Group();shoulderR.position.set(0.38,1.46,0);playerGroup.add(shoulderR);
+ const upperR=capsule(0.09,0.32,bodyMat);upperR.position.set(0,-0.16,0);upperR.rotation.z=-0.35;shoulderR.add(upperR);
+ const foreR=capsule(0.078,0.3,skinMat);foreR.position.set(0.13,-0.42,0.04);foreR.rotation.z=-0.15;shoulderR.add(foreR);
+ const handR=new THREE.Mesh(new THREE.SphereGeometry(0.075,10,10),skinMat);handR.position.set(0.19,-0.6,0.06);shoulderR.add(handR);
+ weaponGroup=new THREE.Group();weaponGroup.position.set(0.19,-0.6,0.06);shoulderR.add(weaponGroup);
+ armShoulder=shoulderR;
+
+ // Schulterplatten
+ const padGeo=new THREE.SphereGeometry(0.12,10,10);
+ [shoulderL,shoulderR].forEach(s=>{const pad=new THREE.Mesh(padGeo,trimMat);pad.scale.set(1,0.7,1);pad.position.y=0.02;s.add(pad)});
+
+ if(!magic){
+   // Kettenhaube / Haarband
+   const cap=new THREE.Mesh(new THREE.SphereGeometry(0.22,14,10,0,Math.PI*2,0,Math.PI*0.58),female?trimMat:bodyMat);
+   cap.position.y=1.83;playerGroup.add(cap);
+   if(female){const tail=capsule(0.05,0.4,hairMat);tail.position.set(0,1.55,0.16);tail.rotation.x=0.6;playerGroup.add(tail)}
+   else{const fin=new THREE.Mesh(new THREE.BoxGeometry(0.03,0.16,0.32),trimMat);fin.position.set(0,2.0,0);playerGroup.add(fin)}
+   // Schild
+   const shield=new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,0.055,20),new THREE.MeshStandardMaterial({color:0x6b5a34,metalness:0.5,roughness:0.5}));
+   shield.rotation.z=Math.PI/2;shield.position.set(-0.5,1.2,0.1);
+   playerGroup.add(shield);shieldMesh=shield;
+   const boss=new THREE.Mesh(new THREE.SphereGeometry(0.075,10,10),shield.material);
+   boss.position.set(-0.58,1.2,0.1);playerGroup.add(boss);
+   // kurzer Umhang
+   const capeMat=new THREE.MeshStandardMaterial({color:trimMat.color.getHex(),roughness:1,side:THREE.DoubleSide});
+   const cape=new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.34,0.55,10,1,true,Math.PI*0.15,Math.PI*1.7),capeMat);
+   cape.position.set(0,1.05,-0.2);playerGroup.add(cape);
+   cloakMesh=null;
+ }else{
+   // Roben-Umhang
+   const cloakMat=new THREE.MeshStandardMaterial({color:0x241830,side:THREE.DoubleSide,roughness:1});
+   const cloak=new THREE.Mesh(new THREE.ConeGeometry(0.4,1.0,16,1,true),cloakMat);
+   cloak.rotation.x=Math.PI;cloak.position.set(0,0.98,-0.1);
+   playerGroup.add(cloak);cloakMesh=cloak;
+   shieldMesh=null;
+   if(kind==="Zauberer"){
+     // Spitzhut mit Krempe
+     const hat=new THREE.Mesh(new THREE.ConeGeometry(0.2,0.55,14),bodyMat);hat.position.y=2.18;playerGroup.add(hat);
+     const brim=new THREE.Mesh(new THREE.CylinderGeometry(0.32,0.32,0.03,16),bodyMat);brim.position.y=1.94;playerGroup.add(brim);
+     const beard=new THREE.Mesh(new THREE.ConeGeometry(0.13,0.34,10),hairMat);beard.position.set(0,1.62,0.1);playerGroup.add(beard);
+   }else{
+     // Kapuze + langes Haar
+     const hood=new THREE.Mesh(new THREE.ConeGeometry(0.26,0.32,14,1,true),cloakMat);
+     hood.position.set(0,1.98,-0.02);playerGroup.add(hood);
+     [-0.05,0.05].forEach(x=>{const braid=capsule(0.035,0.5,hairMat);braid.position.set(x,1.5,0.14);braid.rotation.x=0.5;playerGroup.add(braid)});
+     const circlet=new THREE.Mesh(new THREE.TorusGeometry(0.22,0.014,6,16),trimMat);circlet.rotation.x=Math.PI/2;circlet.position.y=1.9;playerGroup.add(circlet);
+   }
+ }
+ buildWeapon(kind);
+ applyUpgradeVisuals();
+}
+function buildWeapon(kind){
+ weaponGroup.clear();
+ const magic=["Zauberer","Magierin"].includes(kind);
+ if(magic){
+   const staff=new THREE.Group();
+   const shaft=new THREE.Mesh(new THREE.CylinderGeometry(0.028,0.028,1.15,8),new THREE.MeshStandardMaterial({color:0x4a3018}));
+   shaft.position.y=0.35;staff.add(shaft);
+   const gem=new THREE.Mesh(new THREE.SphereGeometry(0.09,10,10),new THREE.MeshStandardMaterial({color:0x8b5cff,emissive:0x6a3fff,emissiveIntensity:1.1}));
+   gem.position.y=0.98;staff.add(gem);
+   weaponGroup.add(staff);staffGem=gem;swordBlade=null;
+ }else{
+   const sword=new THREE.Group();
+   const blade=new THREE.Mesh(new THREE.BoxGeometry(0.055,0.85,0.014),new THREE.MeshStandardMaterial({color:0xcfd6de,metalness:0.75,roughness:0.28}));
+   blade.position.y=0.55;sword.add(blade);
+   const hilt=new THREE.Mesh(new THREE.CylinderGeometry(0.032,0.032,0.2,8),new THREE.MeshStandardMaterial({color:0x3a2814}));
+   hilt.position.y=0.08;sword.add(hilt);
+   weaponGroup.add(sword);swordBlade=blade;staffGem=null;
+ }
+ swingState.magic=magic;
+}
+function applyUpgradeVisuals(){
+ const has=k=>H.items.some(x=>x.includes(k));
+ if(shieldMesh){const up=has("Schild");shieldMesh.material.emissiveIntensity=up?0.7:0;shieldMesh.material.emissive.set(up?0xffcf6a:0x000000);shieldMesh.material.color.set(up?0xc9a24a:0x6b5a34)}
+ if(cloakMesh){cloakMesh.material.color.set(has("Mantel")?0x4a2f66:0x241830)}
+ if(swordBlade){const up=has("Schwert");swordBlade.material.emissiveIntensity=up?1.0:0;swordBlade.material.emissive.set(up?0x66e0ff:0x000000)}
+ if(staffGem){const up=has("Stab");staffGem.material.emissiveIntensity=up?2.2:1.1;staffGem.scale.setScalar(up?1.3:1)}
+}
+function clearEnemy(){if(enemyGroup){sceneT.remove(enemyGroup);enemyGroup=null}dragonWings=[]}
+function makeTroll(){
+ const g=new THREE.Group();
+ const skinTex=noiseTex(32,0.42,0.54,0.29,0.16,4);
+ const skin=new THREE.MeshStandardMaterial({color:0x6b8a4a,roughness:1,map:skinTex});
+ const torso=capsule(0.42,0.75,skin);torso.position.y=1.05;g.add(torso);
+ const belly=new THREE.Mesh(new THREE.SphereGeometry(0.38,14,12),skin);belly.position.set(0,0.85,0.18);belly.scale.set(1,0.95,0.9);g.add(belly);
+ const head=new THREE.Mesh(new THREE.SphereGeometry(0.36,16,14),skin);head.position.y=1.85;head.scale.set(1,1.05,1.05);g.add(head);
+ const brow=new THREE.Mesh(new THREE.SphereGeometry(0.2,12,8),skin);brow.position.set(0,1.95,0.28);brow.scale.set(1.3,0.5,0.7);g.add(brow);
+ const face=new THREE.Mesh(new THREE.PlaneGeometry(0.5,0.5),new THREE.MeshStandardMaterial({map:faceTex("troll"),transparent:true,roughness:1}));
+ face.position.set(0,1.83,0.37);g.add(face);
+ const jaw=new THREE.Mesh(new THREE.SphereGeometry(0.22,12,10),skin);jaw.position.set(0,1.68,0.22);jaw.scale.set(1,0.7,0.85);g.add(jaw);
+ [-0.36,0.36].forEach(x=>{const ear=new THREE.Mesh(new THREE.ConeGeometry(0.1,0.2,8),skin);ear.position.set(x,2.02,0);ear.rotation.z=x<0?0.5:-0.5;g.add(ear)});
+ [-0.62,0.62].forEach(x=>{const arm=capsule(0.13,0.85,skin);arm.position.set(x,0.95,0.05);arm.rotation.z=x<0?0.55:-0.55;g.add(arm)});
+ [-0.22,0.22].forEach(x=>{const leg=capsule(0.16,0.55,skin);leg.position.set(x,0.28,0);g.add(leg)});
+ const club=new THREE.Group();
+ const handle=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.06,0.7,8),new THREE.MeshStandardMaterial({color:0x4a3018}));
+ club.add(handle);
+ const head2=new THREE.Mesh(new THREE.IcosahedronGeometry(0.22,0),new THREE.MeshStandardMaterial({color:0x5a4a34,flatShading:true}));
+ head2.position.y=0.42;club.add(head2);
+ club.position.set(0.95,1.05,0.1);club.rotation.z=-0.7;g.add(club);
+ g.position.set(0,0,-6);g.scale.setScalar(1.1);g.userData.baseScale=1.1;
+ return g;
+}
+function makeGuardian(){
+ const g=new THREE.Group();
+ const robeTex=noiseTex(24,0.17,0.14,0.25,0.15,3);
+ const robeMat=new THREE.MeshStandardMaterial({color:0x2c2440,roughness:1,map:robeTex});
+ const robe=new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.62,1.55,14,1,true),robeMat);
+ robe.position.y=0.95;g.add(robe);
+ const hemCap=new THREE.Mesh(new THREE.CircleGeometry(0.62,14),robeMat);hemCap.rotation.x=-Math.PI/2;hemCap.position.y=0.18;g.add(hemCap);
+ const head=new THREE.Mesh(new THREE.SphereGeometry(0.3,14,14),new THREE.MeshStandardMaterial({color:0x120e1e}));
+ head.position.y=1.95;g.add(head);
+ const hood=new THREE.Mesh(new THREE.ConeGeometry(0.38,0.55,14,1,true),robeMat);
+ hood.position.y=2.05;hood.rotation.x=Math.PI;g.add(hood);
+ const eyeMat=new THREE.MeshBasicMaterial({color:0x8fd0ff});
+ [-0.11,0.11].forEach(x=>{const e=new THREE.Mesh(new THREE.SphereGeometry(0.04,8,8),eyeMat);e.position.set(x,1.97,0.27);g.add(e)});
+ [-0.4,0.4].forEach(x=>{const arm=capsule(0.09,0.7,robeMat);arm.position.set(x,1.15,0.1);arm.rotation.z=x<0?0.35:-0.35;g.add(arm)});
+ g.position.set(0,0,-5.5);g.userData.baseScale=1;
+ return g;
+}
+function makeDragon(close){
+ const g=new THREE.Group();
+ const skinTex=noiseTex(32,0.43,0.12,0.12,0.13,5);
+ const bellyTex=noiseTex(32,0.66,0.44,0.23,0.1,4);
+ const skin=new THREE.MeshStandardMaterial({color:0x6e1f1f,roughness:0.7,map:skinTex});
+ const belly=new THREE.MeshStandardMaterial({color:0xa8703a,roughness:0.75,map:bellyTex});
+ const body=capsule(0.75,1.6,skin);body.rotation.z=Math.PI/2;body.position.y=1.35;g.add(body);
+ const bellyMesh=new THREE.Mesh(new THREE.SphereGeometry(0.55,12,10),belly);bellyMesh.scale.set(1.6,0.8,0.9);bellyMesh.position.set(0,1.05,0.15);g.add(bellyMesh);
+ const neck=capsule(0.34,0.7,skin);neck.rotation.x=0.9;neck.position.set(0,1.75,1.15);g.add(neck);
+ const head=new THREE.Mesh(new THREE.ConeGeometry(0.42,0.95,10),skin);head.rotation.x=Math.PI/2;head.position.set(0,2.0,1.85);g.add(head);
+ const face=new THREE.Mesh(new THREE.PlaneGeometry(0.6,0.6),new THREE.MeshStandardMaterial({map:faceTex("dragon"),transparent:true,roughness:1}));
+ face.position.set(0,2.05,2.12);g.add(face);
+ const jaw=new THREE.Mesh(new THREE.ConeGeometry(0.3,0.6,10),belly);jaw.rotation.x=Math.PI/2;jaw.position.set(0,1.86,1.75);g.add(jaw);
+ const toothMat=new THREE.MeshStandardMaterial({color:0xf2ecd8});
+ for(let i=0;i<4;i++){const tx=-0.18+i*0.12;const tooth=new THREE.Mesh(new THREE.ConeGeometry(0.025,0.09,5),toothMat);tooth.position.set(tx,1.72,1.98);tooth.rotation.x=Math.PI;g.add(tooth)}
+ [-0.14,0.14].forEach(x=>{const horn=new THREE.Mesh(new THREE.ConeGeometry(0.07,0.35,6),new THREE.MeshStandardMaterial({color:0x2a1810}));horn.position.set(x,2.25,1.55);horn.rotation.x=-0.5;g.add(horn)});
+ const wingTex=noiseTex(24,0.14,0.06,0.08,0.2,3);
+ const wingMat=new THREE.MeshStandardMaterial({color:0x2a1418,side:THREE.DoubleSide,roughness:1,map:wingTex});
+ [-1,1].forEach(side=>{
+   const shape=new THREE.Shape();
+   shape.moveTo(0,0);shape.lineTo(side*1.3,0.9);shape.lineTo(side*1.7,0.5);shape.lineTo(side*1.2,-0.1);shape.lineTo(side*0.7,-0.35);shape.lineTo(0,0);
+   const wing=new THREE.Mesh(new THREE.ShapeGeometry(shape),wingMat);
+   wing.position.set(side*0.3,1.95,0.1);wing.rotation.y=side*0.4;
+   g.add(wing);dragonWings.push({mesh:wing,side});
+ });
+ for(let i=0;i<5;i++){const spike=new THREE.Mesh(new THREE.ConeGeometry(0.11,0.32,6),skin);spike.position.set(0,1.95,1.4-i*0.55);g.add(spike)}
+ [-0.5,0.5].forEach(x=>{
+   const leg=capsule(0.2,0.55,skin);leg.position.set(x,0.45,0.9);g.add(leg);
+   [-0.08,0,0.08].forEach(cx=>{const claw=new THREE.Mesh(new THREE.ConeGeometry(0.035,0.14,5),toothMat);claw.position.set(x+cx,0.13,1.15);claw.rotation.x=1.3;g.add(claw)});
+ });
+ const tail=capsule(0.22,1.5,skin);tail.rotation.x=1.3;tail.position.set(0,0.9,-1.35);g.add(tail);
+ const sc=close?1.3:0.7;
+ g.position.set(0,0,close?-7:-14);
+ g.scale.setScalar(sc);g.userData.baseScale=sc;
+ return g;
+}
+function showEnemy(type){
+ clearEnemy();
+ if(!type)return;
+ if(type==="troll")enemyGroup=makeTroll();
+ else if(type==="guardian")enemyGroup=makeGuardian();
+ else if(type==="dragon-far")enemyGroup=makeDragon(false);
+ else if(type==="dragon")enemyGroup=makeDragon(true);
+ if(enemyGroup)sceneT.add(enemyGroup);
+}
+function swingWeapon(){swingState.active=true;swingState.t0=performance.now()}
+function shakeCam(mag){shakeState.active=true;shakeState.t0=performance.now();shakeState.mag=mag||0.12}
+function flashHit(){hitState.active=true;hitState.t0=performance.now()}
+function enemyDie(){dieState.active=true;dieState.t0=performance.now()}
+function loop3D(now){
+ const dt=Math.min((now-lastT)/1000,0.05);lastT=now;
+ const t=now/1000;
+ camera.position.y=2.25+Math.sin(t*1.1)*0.02;
+ camera.position.x=Math.sin(t*0.6)*0.015;
+ if(playerGroup)playerGroup.rotation.y=Math.sin(t*0.5)*0.02;
+ if(shakeState.active){
+   const el=now-shakeState.t0;
+   if(el<400){const k=(1-el/400)*shakeState.mag;camera.position.x+=(Math.random()-0.5)*k;camera.position.y+=(Math.random()-0.5)*k}
+   else shakeState.active=false;
+ }
+ if(swingState.active&&armShoulder){
+   const el=now-swingState.t0,dur=swingState.magic?550:480;
+   if(el<dur){const p=el/dur,s=Math.sin(p*Math.PI);armShoulder.rotation.x=-s*1.9}
+   else{swingState.active=false;armShoulder.rotation.x=0}
+ }
+ if(hitState.active&&enemyGroup){
+   const el=now-hitState.t0;
+   if(el<300){const p=1-el/300;const sc=1+p*0.12;enemyGroup.scale.setScalar((dieState.active?1:1)*sc*(enemyGroup.userData.baseScale||1))}
+ }
+ if(dieState.active&&enemyGroup){
+   const el=now-dieState.t0;
+   const p=Math.min(el/1000,1);
+   enemyGroup.position.y=-p*2.2;
+   enemyGroup.rotation.z=p*0.6;
+   const sc=Math.max(1-p,0.001);
+   enemyGroup.scale.setScalar(sc*(enemyGroup.userData.baseScale||1));
+   if(p>=1){dieState.active=false;clearEnemy()}
+ }
+ dragonWings.forEach(w=>{w.mesh.rotation.z=w.side*(0.3+Math.sin(t*6)*0.15)});
+ torchLights.forEach((pl,i)=>{pl.intensity=2.2+Math.sin(t*9+i*2)*0.5+(Math.random()-0.5)*0.3});
+ flameMeshes.forEach((f,i)=>{const s=1+Math.sin(t*10+i*3)*0.18;f.scale.setScalar(s)});
+ const pos=emberGeo.attributes.position;
+ for(let i=0;i<pos.count;i++){
+   let y=pos.getY(i)+dt*0.5;
+   if(y>3.2)y=0;
+   pos.setY(i,y);
+ }
+ pos.needsUpdate=true;
+ renderer.render(sceneT,camera);
+}
+
+/* ---------- Spiel-Logik ---------- */
+document.querySelectorAll(".gender button").forEach(b=>b.onclick=()=>{H.kind=b.dataset.kind;document.querySelectorAll(".hero").forEach(x=>x.classList.remove("selected"));b.closest(".hero").classList.add("selected");document.querySelectorAll(".gender button").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");$("chosen").textContent="Gewählt: "+H.kind;$("startBtn").disabled=false});
+$("startBtn").onclick=startGame;
+function startGame(){
+ actx();sweep(200,600,.4,"triangle",.06);
+ $("start").classList.remove("active");$("game").classList.add("active");
+ H={...H,hp:100,xp:0,items:[]};
+ let a={Ritter:"🧑‍⚔️",Kriegerin:"👩‍🦰⚔️",Zauberer:"🧙‍♂️",Magierin:"👩‍🦳🪄"}[H.kind];
+ $("miniAvatar").textContent=a;$("heroName").textContent=H.kind;update();
+ if(!inited){init3D();inited=true}else{resize3D()}
+ buildPlayerModel(H.kind);showEnemy("");
+ intro();
+}
+function update(){$("hpText").textContent=`${H.hp} / 100`;$("hpbar").firstElementChild.style.width=H.hp+"%";$("xpText").textContent=`${H.xp} / 100`;$("xpbar").style.width=Math.min(H.xp,100)+"%";$("tags").innerHTML=H.items.map(x=>`<span class="tag">✨ ${x}</span>`).join("")||'<span class="tag">Keine Upgrades</span>';applyUpgradeVisuals()}
+function scene(t,s,enemyKey=""){$("title").textContent=t;$("story").textContent=s;showEnemy(enemyKey)}
+function buttons(a){$("controls").innerHTML="";a.forEach(x=>{let b=document.createElement("button");b.className="action";b.textContent=x[0];b.onclick=x[1];$("controls").appendChild(b)})}
+function map(n){for(let i=1;i<=4;i++){$("n"+i).classList.toggle("current",i===n);if(i<n)$("n"+i).classList.add("done")}sound(880,.12,"sine",.04)}
+function intro(){map(1);pageTurn();scene("Das Tor zur Heldenreise","Vor dir liegt ein uralter Wald. Im Nebel bewegt sich etwas Großes. Du hörst eine schwere Keule über den Boden schleifen.");buttons([["🌲 In den Wald",troll]])}
+function ask(k,yes,no){
+  actx();
+  P={k,yes,no};
+  let q=Q[k];
+  $("qtitle").textContent=q[0];
+  $("qtext").textContent=q[1];
+  $("feedback").className="feedback";
+  let answers=q[2].map((text,index)=>({text,index}));
+  for(let i=answers.length-1;i>0;i--){
+    let j=Math.floor(Math.random()*(i+1));
+    [answers[i],answers[j]]=[answers[j],answers[i]];
+  }
+  $("answers").innerHTML=answers.map((a,i)=>
+    `<button onclick="answer(${a.index})">${String.fromCharCode(65+i)}) ${a.text}</button>`
+  ).join("");
+  $("modal").classList.add("open");
+}
+function answer(i){let q=Q[P.k],ok=i===q[3];document.querySelectorAll("#answers button").forEach(b=>b.disabled=true);$("feedback").textContent=ok?"✅ Richtig! "+q[4]:"❌ Falsch. "+q[4];$("feedback").className="feedback show";if(ok){correctSound();H.xp=Math.min(100,H.xp+q[5]);update()}else{wrongSound()}setTimeout(()=>{$("modal").classList.remove("open");(ok?P.yes:P.no)()},1000)}
+let AC=null;function actx(){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume();return AC}catch(e){return null}}
+function sound(f,d,type="sine",vol=.06){let c=actx();if(!c)return;try{let o=c.createOscillator(),g=c.createGain(),t0=c.currentTime;o.type=type;o.frequency.setValueAtTime(f,t0);g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+.02);g.gain.exponentialRampToValueAtTime(.0001,t0+d);o.connect(g);g.connect(c.destination);o.start(t0);o.stop(t0+d+.05)}catch(e){}}
+function sweep(f1,f2,d,type="sawtooth",vol=.08){let c=actx();if(!c)return;try{let o=c.createOscillator(),g=c.createGain(),t0=c.currentTime;o.type=type;o.frequency.setValueAtTime(f1,t0);o.frequency.exponentialRampToValueAtTime(f2,t0+d);g.gain.setValueAtTime(vol,t0);g.gain.exponentialRampToValueAtTime(.0001,t0+d);o.connect(g);g.connect(c.destination);o.start(t0);o.stop(t0+d+.05)}catch(e){}}
+function noiseBurst(d,vol=.12,lp=900){let c=actx();if(!c)return;try{let n=c.sampleRate*d,buf=c.createBuffer(1,n,c.sampleRate),data=buf.getChannelData(0);for(let i=0;i<n;i++)data[i]=(Math.random()*2-1)*(1-i/n);let src=c.createBufferSource();src.buffer=buf;let f=c.createBiquadFilter();f.type="lowpass";f.frequency.value=lp;let g=c.createGain();g.gain.setValueAtTime(vol,c.currentTime);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+d);src.connect(f);f.connect(g);g.connect(c.destination);src.start()}catch(e){}}
+function chord(freqs,d,type="triangle",vol=.05){freqs.forEach((f,i)=>setTimeout(()=>sound(f,d,type,vol),i*70))}
+function clickSound(){sound(760,.07,"square",.04)}
+function roar(low){let c=actx();if(!c)return;sweep(low?95:180,low?45:70,.9,"sawtooth",.09);noiseBurst(.9,.06,500)}
+function pageTurn(){sweep(300,90,.35,"triangle",.05)}
+function correctSound(){chord([523,659,784,1046],.45,"triangle",.06)}
+function wrongSound(){sweep(220,80,.5,"sawtooth",.08)}
+function fanfare(){[523,523,523,659,784,1046].forEach((f,i)=>setTimeout(()=>sound(f,i===5?.7:.18,"triangle",.07),i*130))}
+document.addEventListener("click",e=>{if(e.target&&e.target.tagName==="BUTTON")clickSound()},true);
+function damage(n){H.hp=Math.max(1,H.hp-n);update();$("hpbar").classList.remove("shake");void $("hpbar").offsetWidth;$("hpbar").classList.add("shake");shakeCam(0.18);sweep(260,70,.4,"sawtooth",.09);noiseBurst(.3,.08,600);$("toast").textContent=`❤️ −${n} Lebenspunkte`;$("toast").classList.add("show");setTimeout(()=>$("toast").classList.remove("show"),900)}
+function attack(){let magic=["Zauberer","Magierin"].includes(H.kind);swingWeapon();flashHit();if(magic){chord([440,660,880],.3,"sine",.05)}else{noiseBurst(.15,.1,2200);sound(180,.2,"square",.06)}}
+function troll(){map(2);roar(false);scene("Der Troll","Ein großer, freundlicher Troll tritt aus dem Nebel. Er ist etwas mürrisch, aber harmlos und trägt eine schwere Keule. Mit einem verschmitzten Lächeln stellt er dir seine Rätsel aus der Chemie.","troll");buttons([["⚔️ Erste Prüfung",()=>ask("t1",troll2,()=>{damage(15);troll2()})]])}
+function troll2(){buttons([["⚔️ Zweite Prüfung",()=>ask("t2",trollWin,()=>{damage(20);trollWin()})]])}
+function trollWin(){attack();setTimeout(()=>{enemyDie();setTimeout(bridge,650)},400)}
+function bridge(){map(3);pageTurn();scene("Die verlassene Brücke","Hinter dem Troll wartet eine düstere Schlucht. Ein geheimnisvoller Wächter verlangt eine Kraft-Berechnung, bevor du weiter darfst.","guardian");buttons([["🧠 Rätsel lösen",()=>ask("bridge",forge,()=>{damage(15);forge()})]])}
+function forge(){pageTurn();scene("Die verborgene Schmiede","Das Feuer der Schmiede lodert. Hier kannst du dein erstes Ausrüstungsstück verbessern.","");let k=["Ritter","Kriegerin"].includes(H.kind)?"shield":"staff",i=k==="shield"?"Schild":"Stab";buttons([[`✨ ${i} upgraden`,()=>ask(k,()=>{H.items.push("verstärkter "+i);update();forgeNext()},forgeNext)],["⏭️ Überspringen",forgeNext]])}
+function forgeNext(){pageTurn();scene("Der Drachenberg","Vor dem Eingang der Drachenhöhle liegt die letzte Schmiede. Du kannst dein Schwert oder deinen Mantel verbessern.","dragon-far");buttons([["🔥 Letzte Vorbereitung",finalForge]])}
+function finalForge(){let k=["Ritter","Kriegerin"].includes(H.kind)?"sword":"cloak",i=k==="sword"?"Schwert":"Mantel";buttons([[`✨ ${i} verbessern`,()=>ask(k,()=>{H.items.push("verbesserter "+i);update();dragon()},dragon)],["⏭️ Ohne Upgrade",dragon]])}
+function dragon(){map(4);roar(true);scene("Der Drache","Der Drache erhebt sich aus der Feuerhöhle. Drei schwere Prüfungen stehen dir bevor. Der Boden bebt.","dragon");buttons([["⚔️ Erste Drachenprüfung",()=>ask("d1",d2,wrong)]])}
+function d2(){attack();setTimeout(()=>buttons([["⚡ Zweite Drachenprüfung",()=>ask("d2",d3,wrong)]]),450)}
+function d3(){buttons([["🔥 Letzte Drachenprüfung",()=>ask("d3",win,wrong)]])}
+function wrong(){damage(25);buttons([["⚔️ Weiterkämpfen",d3]])}
+function win(){
+ attack();
+ setTimeout(()=>{
+   enemyDie();noiseBurst(.6,.09,400);
+   $("title").textContent="Der Drache fällt!";
+   $("story").textContent="Ein letzter Schrei hallt durch das Gebirge. Du hast dein Chemiewissen bewiesen und die Heldenreise vollendet.";
+   fanfare();
+   setTimeout(end,1600);
+ },500);
+}
+function end(){$("game").classList.remove("active");$("end").classList.add("active");$("endText").textContent=`${H.kind}: Du hast den Drachen besiegt! XP: ${H.xp}/100. Upgrades: ${H.items.join(", ")||"keine"}.`}
+</script></body></html>
