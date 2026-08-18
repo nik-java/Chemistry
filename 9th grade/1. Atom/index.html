@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Das Rätsel des zersplitterten Atoms</title>
+<style>
+  :root {
+    --bg1: #0b0f1f;
+    --bg2: #1a1033;
+    --card: #171233;
+    --card-border: #3d2c6d;
+    --accent: #c9a227;
+    --accent2: #7c5cff;
+    --correct: #3ecf6a;
+    --incorrect: #e5484d;
+    --text: #f4f0ff;
+    --muted: #a89bd6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Georgia', 'Segoe UI', serif;
+    background: radial-gradient(circle at top, var(--bg2), var(--bg1) 70%);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 24px 12px;
+  }
+  .wrap { width: 100%; max-width: 700px; }
+  header { text-align: center; margin-bottom: 18px; }
+  header h1 {
+    font-size: 1.55rem;
+    margin: 0 0 4px;
+    letter-spacing: 0.5px;
+    color: var(--accent);
+    text-shadow: 0 0 18px rgba(201,162,39,0.35);
+  }
+  header p { color: var(--muted); margin: 0; font-size: 0.9rem; }
+
+  .progress-wrap {
+    background: rgba(255,255,255,0.08);
+    border-radius: 999px;
+    height: 8px;
+    overflow: hidden;
+    margin: 18px 0;
+    border: 1px solid var(--card-border);
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+
+  .card {
+    background: linear-gradient(160deg, #1c1640, #130f2b);
+    border: 1px solid var(--card-border);
+    border-radius: 18px;
+    padding: 26px;
+    box-shadow: 0 20px 45px rgba(0,0,0,0.45);
+    position: relative;
+  }
+  .chapter-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(201,162,39,0.12);
+    border: 1px solid rgba(201,162,39,0.4);
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 14px;
+  }
+  .story-text {
+    font-size: 1.02rem;
+    line-height: 1.65;
+    color: #e9e4ff;
+    margin-bottom: 18px;
+    white-space: pre-line;
+  }
+  .q-text {
+    font-size: 1.08rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text);
+    line-height: 1.45;
+  }
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .option {
+    background: rgba(255,255,255,0.04);
+    border: 2px solid var(--card-border);
+    border-radius: 10px;
+    padding: 13px 16px;
+    text-align: left;
+    color: var(--text);
+    font-size: 0.98rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+  }
+  .option:hover:not(:disabled) {
+    border-color: var(--accent2);
+    background: rgba(124,92,255,0.12);
+  }
+  .option:disabled { cursor: default; }
+  .option.correct { border-color: var(--correct); background: rgba(62,207,106,0.15); }
+  .option.incorrect { border-color: var(--incorrect); background: rgba(229,72,77,0.15); }
+
+  .hint-btn {
+    margin-top: 10px;
+    background: transparent;
+    border: 1px dashed var(--muted);
+    color: var(--muted);
+    padding: 7px 13px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-family: inherit;
+  }
+  .hint-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .hint-text {
+    margin-top: 10px;
+    font-size: 0.88rem;
+    color: var(--accent);
+    display: none;
+    font-style: italic;
+  }
+
+  .feedback {
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    display: none;
+    line-height: 1.5;
+    font-size: 0.95rem;
+  }
+  .feedback.show { display: block; }
+  .feedback.correct-fb { background: rgba(62,207,106,0.10); border: 1px solid var(--correct); }
+  .feedback.incorrect-fb { background: rgba(229,72,77,0.10); border: 1px solid var(--incorrect); }
+  .feedback strong { display: block; margin-bottom: 4px; }
+
+  .continue-btn {
+    background: linear-gradient(90deg, var(--accent2), #5a3fd6);
+    color: #fff;
+    font-weight: 700;
+    border: none;
+    display: block;
+    width: 100%;
+    padding: 13px;
+    margin-top: 18px;
+    font-size: 1rem;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .continue-btn.show { opacity: 1; pointer-events: auto; }
+  .continue-btn:hover { filter: brightness(1.1); }
+
+  .notebook {
+    margin-top: 18px;
+    background: rgba(255,255,255,0.03);
+    border: 1px dashed var(--card-border);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .notebook h3 {
+    margin: 0 0 8px;
+    font-size: 0.85rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .notebook ul { margin: 0; padding-left: 20px; color: var(--muted); font-size: 0.88rem; }
+  .notebook li { margin-bottom: 4px; }
+  .notebook .empty { color: #5c5384; font-style: italic; }
+
+  .result-screen { text-align: center; }
+  .result-score {
+    font-size: 2.6rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin: 10px 0;
+  }
+  .restart-btn {
+    width: 100%;
+    padding: 12px;
+    margin-top: 20px;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.95rem;
+  }
+  .restart-btn:hover { background: var(--accent); color: #1a1033; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>⚗️ Das Rätsel des zersplitterten Atoms</h1>
+    <p>Eine interaktive Reise von Professor Gustav durch das Labor der Elemente</p>
+  </header>
+
+  <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+  <div class="card" id="sceneCard">
+    <div class="chapter-tag" id="chapterTag"></div>
+    <div class="story-text" id="storyText"></div>
+    <div id="questionBlock" class="hidden">
+      <div class="q-text" id="qText"></div>
+      <div class="options" id="options"></div>
+      <button class="hint-btn" id="hintBtn">🔍 Hinweis der Werkbank</button>
+      <div class="hint-text" id="hintText"></div>
+      <div class="feedback" id="feedback">
+        <strong id="feedbackTitle"></strong>
+        <span id="feedbackText"></span>
+      </div>
+    </div>
+    <button class="continue-btn" id="continueBtn">Weiter →</button>
+
+    <div class="notebook">
+      <h3>📓 Forschungsnotizen des Professors</h3>
+      <ul id="notebookList"><li class="empty">Noch keine Erkenntnisse gesammelt …</li></ul>
+    </div>
+  </div>
+
+  <div class="card result-screen hidden" id="resultCard">
+    <div class="chapter-tag">Finale</div>
+    <div class="story-text" id="resultStory"></div>
+    <div>Gelöste Rätsel</div>
+    <div class="result-score" id="scoreText"></div>
+    <button class="restart-btn" id="restartBtn">Das Abenteuer erneut beginnen</button>
+  </div>
+</div>
+
+<script>
+// Jede Szene: type 'story' (nur Text + Weiter) oder 'question' (Text + Frage)
+const scenes = [
+  {
+    type: 'story',
+    chapter: 'Prolog',
+    text: `Professor Gustav wacht mitten in der Nacht auf, als grelles violettes Licht durch sein Labor flackert. Der alte Modell-Schrank ist explodiert – Kugeln, Kerne und Elektronenbahnen schweben wild durch den Raum, als hätte jemand die gesamte Atomtheorie durcheinandergewirbelt.
+
+Eine geisterhafte Stimme flüstert aus dem Nebel: „Nur wer die Ordnung der Materie wiederherstellt, kann das Labor verlassen." Der Professor krempelt die Ärmel hoch. Zeit, sich an die Werkbank zu stellen.`
+  },
+  {
+    type: 'question',
+    chapter: 'Kapitel 1 · Die Halle der Modelle',
+    text: `Vor Professor Gustav erscheinen drei schimmernde Türen, jede mit einer alten Zeichnung versehen. Eine raue Steinstimme verlangt: „Ordne die erste Beschreibung ihrem Modell zu, sonst bleibt die Tür verriegelt."
+
+„Atome sind kleine, kompakte Kugeln, die sich nicht weiter zerteilen oder verändern lassen."`,
+    options: ['Dalton-Modell', 'Rutherford-Modell', 'Bohr-Modell'],
+    correct: 0,
+    hint: 'Dieses Modell ist das älteste der drei und kennt weder Kern noch Schalen.',
+    explanation: 'Richtig! John Dalton stellte sich Atome Anfang des 19. Jahrhunderts als unteilbare, massive Kugeln vor – ohne inneren Aufbau.',
+    note: 'Dalton-Modell: Atom = unteilbare, feste Kugel'
+  },
+  {
+    type: 'question',
+    chapter: 'Kapitel 1 · Die Halle der Modelle',
+    text: `Die zweite Tür knarrt und zeigt ein Bild von Goldfolie, durch die winzige Teilchen hindurchschießen.
+
+„Beim Streuversuch mit Goldfolie zeigte sich: Atome bestehen fast nur aus leerem Raum, in dessen Zentrum ein winziger, schwerer und positiv geladener Kern sitzt."`,
+    options: ['Dalton-Modell', 'Rutherford-Modell', 'Bohr-Modell'],
+    correct: 1,
+    hint: 'Der Name des Modells ist auch der Name des Wissenschaftlers, der diesen Streuversuch durchführte.',
+    explanation: 'Genau! Ernest Rutherford entdeckte durch den Streuversuch, dass die positive Ladung und fast die gesamte Masse im winzigen Atomkern stecken.',
+    note: 'Rutherford-Modell: kleiner, schwerer Kern + fast leerer Raum drumherum'
+  },
+  {
+    type: 'question',
+    chapter: 'Kapitel 1 · Die Halle der Modelle',
+    text: `Die dritte Tür leuchtet in bunten Ringen wie eine Zielscheibe aus Licht.
+
+„Elektronen springen zwischen festgelegten Bahnen und senden dabei Licht bestimmter Farben aus."`,
+    options: ['Dalton-Modell', 'Rutherford-Modell', 'Bohr-Modell'],
+    correct: 2,
+    hint: 'Dieses Modell führte feste "Schalen" für Elektronen ein.',
+    explanation: 'Korrekt! Niels Bohr ergänzte das Modell um feste Elektronenschalen mit unterschiedlichem Energiegehalt.',
+    note: 'Bohr-Modell: Elektronen auf festen Schalen mit unterschiedlicher Energie'
+  },
+  {
+    type: 'question',
+    chapter: 'Kapitel 1 · Die Halle der Modelle',
+    text: `Alle drei Türen öffnen sich knarrend zugleich – doch ein steinernes Zahnrad blockiert noch den Weg. „Nenne die richtige zeitliche Reihenfolge, in der die Modelle entdeckt wurden", fordert die Stimme.`,
+    options: [
+      'Dalton → Rutherford → Bohr',
+      'Bohr → Dalton → Rutherford',
+      'Rutherford → Bohr → Dalton',
+      'Dalton → Bohr → Rutherford'
+    ],
+    correct: 0,
+    hint: 'Erst die einfache Kugel, dann die Entdeckung des Kerns, zuletzt die Schalenstruktur.',
+    explanation: 'Genau richtig! Zuerst Dalton (um 1800), dann Rutherford (1911, Kernentdeckung), zuletzt Bohr (1913, Schalenmodell).',
+    note: 'Reihenfolge: Dalton → Rutherford → Bohr'
+  },
+  {
+    type: 'story',
+    chapter: 'Zwischenspiel',
+    text: `Das Zahnrad dreht sich, die Halle öffnet sich zu einer funkelnden Bibliothek: Das Periodensystem der Elemente thront riesig an der Wand, doch alle Zahlen daneben flackern und verschwimmen. „Ohne Kenngrößen ist jedes Element nur ein Buchstabe ohne Bedeutung", murmelt der Professor und tritt näher.`
+  },
+  {
+    type: 'question',
+    chapter: 'Kapitel 2 · Der Periodensystem-Schrein',
+    text: `Vor einem Regal liegt eine Karteikarte zum Element Fluor. Sie zeigt: Ordnungszahl (Protonenzahl) = 9, Massenzahl = 19.
+
+Wie viele Neutronen besitzt ein Fluor-Atom mit dieser Massenzahl?`,
+    options: ['9', '10', '19', '28'],
+    correct: 1,
+    hint: 'Neutronenzahl = Massenzahl − Ordnungszahl.',
+    explanation: 'Richtig! 19 (Massenzahl) − 9 (Ordnungszahl/Protonen) = 10 Neutronen.',
+    note: 'Fluor-19: 9 Protonen, 10 Neutronen, 9 Elektronen'
+  },
+  {
+    type: 'question',
+    chapter: 'Kapitel 2 · Der Periodensystem-Schrein',
+    text: `Eine zweite Karte zu Calcium leuchtet auf: Ordnungszahl = 20. Das Atom ist elektrisch neutral.
+
+Wie viele Elektronen besitzt dieses Calcium-Atom?`,
+    options: ['10', '20', '40', '60'],
+    correct: 1,
+    hint: 'In einem neutralen Atom ist die Protonenzahl gleich der Elektronenzahl.',
+    explanation: 'Genau! Ein neutrales Atom hat gleich viele Elektronen wie Protonen – bei Calcium also 20.',
+    note: 'Calcium: Ordnungszahl 20 → 20 Protonen = 20 Elektronen (neutral)'
+  },
+  {
+    type: 'question',
+    chapter: 'Kapitel 2 · Der Periodensystem-Schrein',
+    text: `Die letzte Karte zeigt Kalium mit der Schreibweise ³⁹₁₉K.
+
+Was geben die beiden Zahlen 39 und 19 in dieser Schreibweise an?`,
+    options: [
+      '39 = Massenzahl, 19 = Ordnungszahl',
+      '39 = Ordnungszahl, 19 = Massenzahl',
+      '39 = Anzahl Elektronen, 19 = Anzahl Neutronen',
+      '39 = Anzahl Schalen, 19 = Anzahl Protonen'
+    ],
+    correct: 0,
+    hint: 'Die größere Zahl steht meist oben links und zählt Protonen plus Neutronen zusammen.',
+    explanation: 'Richtig! Oben steht die Massenzahl (Protonen + Neutronen = 39), unten die Ordnungszahl/Kernladungszahl (Protonen = 19).',
+    note: 'Schreibweise ᴬ_ZX: A = Massenzahl, Z = Ordnungszahl'
+  },
+  {
+    type: 'story',
+    chapter: 'Zwischenspiel',
+    text: `Ein schmaler Turm aus leuchtenden Ringen erhebt sich hinter der Bibliothek – der Schalen-Turm. Kleine Lichtpunkte kreisen darin in verschiedenen Höhen. „Jede Schale hat ihre eigene Energie", erklärt die Stimme aus dem Nebel. „Verstehst du das Muster, öffnet sich der Weg nach oben."`
+  },
+  {
+    type: 'question',
+    chapter: 'Kapitel 3 · Der Schalen-Turm',
+    text: `Auf dem untersten Ring des Turms steht in leuchtender Schrift eine unvollständige Regel:
+
+„Elektronen auf den inneren Schalen sind ___________ und befinden sich ___________ als Elektronen auf äußeren Schalen."
+
+Welche Wortkombination vervollständigt die Regel richtig?`,
+    options: [
+      'energieärmer – näher am Kern',
+      'energiereicher – näher am Kern',
+      'energieärmer – weiter vom Kern entfernt',
+      'energiereicher – weiter vom Kern entfernt'
+    ],
+    correct: 0,
+    hint: 'Je näher am Kern, desto stärker gebunden – und desto weniger Energie besitzt das Elektron.',
+    explanation: 'Genau! Elektronen innerer Schalen sind energieärmer und befinden sich näher am Kern; äußere Schalen sind energiereicher und weiter entfernt.',
+    note: 'Innere Schalen: energieärmer & kernnah. Äußere Schalen: energiereicher & kernfern.'
+  },
+  {
+    type: 'question',
+    chapter: 'Kapitel 3 · Der Schalen-Turm',
+    text: `Der Turm knirscht und fragt weiter: Die K-Schale (erste Schale) füllt sich zuerst. Wie viele Elektronen passen maximal hinein, bevor die nächste Schale (L-Schale) besetzt wird?`,
+    options: ['2', '8', '10', '18'],
+    correct: 0,
+    hint: 'Es ist die kleinste Kapazität aller Schalen im Bohr-Modell.',
+    explanation: 'Richtig! Die K-Schale fasst maximal 2 Elektronen, danach wird die L-Schale (bis zu 8 Elektronen) besetzt.',
+    note: 'K-Schale: max. 2 Elektronen; L-Schale: max. 8 Elektronen'
+  },
+  {
+    type: 'story',
+    chapter: 'Zwischenspiel',
+    text: `Ganz oben im Turm wartet eine letzte, doppelte Tür – auf ihr sind zwei fast identische Atomsymbole eingraviert, die sich nur in einer Zahl unterscheiden. „Zwillinge und doch nicht gleich", flüstert die Stimme. „Löse das Rätsel der Isotope, und das Labor wird sich wieder ordnen."`
+  },
+  {
+    type: 'question',
+    chapter: 'Kapitel 4 · Das Isotopenrätsel',
+    text: `Brom kommt in der Natur zu etwa gleichen Teilen als Brom-79 und Brom-81 vor. Im Periodensystem steht bei Brom aber eine Atommasse von etwa 79,9 u – keine der beiden ganzen Zahlen.
+
+Was ist der Grund dafür?`,
+    options: [
+      'Die angegebene Atommasse ist ein Durchschnittswert aus den natürlich vorkommenden Isotopen.',
+      'Brom-79 und Brom-81 haben unterschiedliche Protonenzahlen.',
+      'Im Periodensystem wird immer aufgerundet.',
+      'Die Atommasse wurde falsch gemessen.'
+    ],
+    correct: 0,
+    hint: 'Isotope eines Elements haben die gleiche Protonenzahl, aber unterschiedlich viele Neutronen – und kommen unterschiedlich häufig vor.',
+    explanation: 'Genau! Die im Periodensystem angegebene Atommasse ist ein gewichteter Mittelwert aus allen natürlich vorkommenden Isotopen – deshalb liegt sie zwischen 79 und 81.',
+    note: 'Isotope: gleiche Protonenzahl, unterschiedliche Neutronenzahl → Atommasse im PSE ist ein Mittelwert'
+  },
+  {
+    type: 'question',
+    chapter: 'Kapitel 4 · Das Isotopenrätsel',
+    text: `Als letzte Prüfung erscheint Kupfer: Ordnungszahl 29, ein Isotop mit der Massenzahl 63.
+
+Wie viele Neutronen besitzt dieses Kupfer-Isotop?`,
+    options: ['29', '34', '63', '92'],
+    correct: 1,
+    hint: 'Neutronenzahl = Massenzahl − Ordnungszahl.',
+    explanation: 'Richtig! 63 − 29 = 34 Neutronen. Damit ist auch das letzte Rätsel gelöst.',
+    note: 'Kupfer-63: 29 Protonen, 34 Neutronen, 29 Elektronen'
+  }
+];
+
+let current = 0;
+let score = 0;
+let questionCount = scenes.filter(s => s.type === 'question').length;
+let answered = false;
+const collectedNotes = [];
+
+const chapterTag = document.getElementById('chapterTag');
+const storyText = document.getElementById('storyText');
+const questionBlock = document.getElementById('questionBlock');
+const qText = document.getElementById('qText');
+const optionsEl = document.getElementById('options');
+const hintBtn = document.getElementById('hintBtn');
+const hintText = document.getElementById('hintText');
+const feedback = document.getElementById('feedback');
+const feedbackTitle = document.getElementById('feedbackTitle');
+const feedbackText = document.getElementById('feedbackText');
+const continueBtn = document.getElementById('continueBtn');
+const progressBar = document.getElementById('progressBar');
+const sceneCard = document.getElementById('sceneCard');
+const resultCard = document.getElementById('resultCard');
+const scoreText = document.getElementById('scoreText');
+const resultStory = document.getElementById('resultStory');
+const restartBtn = document.getElementById('restartBtn');
+const notebookList = document.getElementById('notebookList');
+
+function renderNotebook() {
+  if (collectedNotes.length === 0) {
+    notebookList.innerHTML = '<li class="empty">Noch keine Erkenntnisse gesammelt …</li>';
+    return;
+  }
+  notebookList.innerHTML = collectedNotes.map(n => `<li>${n}</li>`).join('');
+}
+
+function loadScene() {
+  const scene = scenes[current];
+  answered = false;
+  progressBar.style.width = `${(current / scenes.length) * 100}%`;
+  chapterTag.textContent = scene.chapter;
+  storyText.textContent = scene.text;
+
+  continueBtn.classList.remove('show');
+  hintText.style.display = 'none';
+  feedback.classList.remove('show', 'correct-fb', 'incorrect-fb');
+
+  if (scene.type === 'story') {
+    questionBlock.classList.add('hidden');
+    continueBtn.classList.add('show');
+    continueBtn.textContent = 'Weiter →';
+  } else {
+    questionBlock.classList.remove('hidden');
+    qText.textContent = '';
+    optionsEl.innerHTML = '';
+    hintBtn.style.display = scene.hint ? 'inline-block' : 'none';
+    hintText.textContent = scene.hint || '';
+
+    scene.options.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'option';
+      btn.textContent = opt;
+      btn.addEventListener('click', () => selectAnswer(i));
+      optionsEl.appendChild(btn);
+    });
+  }
+}
+
+hintBtn.addEventListener('click', () => { hintText.style.display = 'block'; });
+
+function selectAnswer(i) {
+  if (answered) return;
+  answered = true;
+  const scene = scenes[current];
+  const buttons = optionsEl.querySelectorAll('.option');
+  buttons.forEach(b => b.disabled = true);
+  buttons[scene.correct].classList.add('correct');
+
+  if (i === scene.correct) {
+    score++;
+    if (scene.note) {
+      collectedNotes.push(scene.note);
+      renderNotebook();
+    }
+  } else {
+    buttons[i].classList.add('incorrect');
+  }
+
+  feedback.classList.add('show', i === scene.correct ? 'correct-fb' : 'incorrect-fb');
+  feedbackTitle.textContent = i === scene.correct ? 'Das Zahnrad rastet ein!' : 'Ein Funke verpufft …';
+  feedbackText.textContent = scene.explanation;
+
+  continueBtn.classList.add('show');
+  continueBtn.textContent = current === scenes.length - 1 ? 'Das Labor verlassen →' : 'Weiter →';
+}
+
+continueBtn.addEventListener('click', () => {
+  current++;
+  if (current < scenes.length) {
+    loadScene();
+  } else {
+    showResult();
+  }
+});
+
+function showResult() {
+  progressBar.style.width = '100%';
+  sceneCard.classList.add('hidden');
+  resultCard.classList.remove('hidden');
+  scoreText.textContent = `${score} / ${questionCount}`;
+
+  const pct = score / questionCount;
+  let msg;
+  if (pct === 1) {
+    msg = `Mit einem letzten Funkeln fügen sich alle Modelle, Kerne und Schalen wieder zusammen. Professor Gustav hat jedes Rätsel gelöst – das Labor ist gerettet, und sein Wissen über den Atombau strahlt heller als je zuvor. ⚛️✨`;
+  } else if (pct >= 0.7) {
+    msg = `Das Labor beruhigt sich langsam. Professor Gustav hat die meisten Rätsel gemeistert – nur wenige Lichtpunkte flackern noch unruhig. Ein Blick ins Forschungsnotizbuch würde die letzten Lücken schließen.`;
+  } else {
+    msg = `Das Licht im Labor wird ruhiger, doch einige Kammern bleiben im Halbdunkel. Professor Gustav beschließt, morgen mit frischem Kopf noch einmal durch die Kammern zu gehen.`;
+  }
+  resultStory.textContent = msg;
+}
+
+restartBtn.addEventListener('click', () => {
+  current = 0;
+  score = 0;
+  collectedNotes.length = 0;
+  renderNotebook();
+  resultCard.classList.add('hidden');
+  sceneCard.classList.remove('hidden');
+  loadScene();
+});
+
+loadScene();
+</script>
+</body>
+</html>
