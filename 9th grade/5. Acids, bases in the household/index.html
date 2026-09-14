@@ -1,1 +1,546 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Das Alte Chemielabor – Säuren, Laugen &amp; Indikatoren</title>
+<style>
+  :root{
+    --wood-dark:#2c1e14;
+    --wood-mid:#4a3221;
+    --wood-light:#6b4a30;
+    --brass:#b8894f;
+    --brass-light:#dcb989;
+    --parchment:#ece0c4;
+    --parchment-dark:#d8c79f;
+    --ink:#2a2016;
+    --glass:#dfeef0;
+    --shelf-shadow:rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:Georgia,'Times New Roman',serif;
+    color:var(--parchment);
+    background:
+      repeating-linear-gradient(90deg, var(--wood-dark) 0px, var(--wood-mid) 3px, var(--wood-dark) 6px),
+      linear-gradient(180deg,#241811,#1b120c);
+    min-height:100vh;
+    padding:18px;
+  }
+  h1,h2,h3{font-family:Georgia,'Times New Roman',serif; margin:0;}
+  .frame{
+    max-width:1180px;
+    margin:0 auto;
+    border:10px solid var(--brass);
+    border-radius:6px;
+    background:linear-gradient(180deg,#3a2818,#2a1c10);
+    box-shadow:0 0 0 3px #1a1108, 0 20px 50px rgba(0,0,0,.6);
+    padding:20px;
+  }
+  header{
+    text-align:center;
+    padding-bottom:14px;
+    border-bottom:2px dashed var(--brass);
+    margin-bottom:18px;
+  }
+  header h1{
+    font-size:1.9rem;
+    letter-spacing:.5px;
+    color:var(--parchment);
+    text-shadow:0 2px 3px rgba(0,0,0,.6);
+  }
+  header p{
+    margin:8px auto 0;
+    max-width:640px;
+    font-size:.95rem;
+    color:var(--parchment-dark);
+    font-style:italic;
+  }
+  .lab{
+    display:grid;
+    grid-template-columns:230px 1fr 260px;
+    gap:16px;
+    align-items:start;
+  }
+  @media (max-width:920px){
+    .lab{grid-template-columns:1fr;}
+  }
+  .shelf{
+    background:linear-gradient(180deg,#3d2a1a,#31210f);
+    border:2px solid var(--brass);
+    border-radius:8px;
+    padding:12px;
+    box-shadow:inset 0 0 18px var(--shelf-shadow);
+  }
+  .shelf h2{
+    font-size:1.05rem;
+    text-align:center;
+    color:var(--brass-light);
+    border-bottom:1px solid var(--brass);
+    padding-bottom:6px;
+    margin-bottom:10px;
+  }
+  .bottle-list{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    max-height:520px;
+    overflow-y:auto;
+    padding-right:4px;
+  }
+  .bottle-list::-webkit-scrollbar{width:8px;}
+  .bottle-list::-webkit-scrollbar-thumb{background:var(--brass); border-radius:4px;}
+
+  .substance{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--parchment);
+    color:var(--ink);
+    border:1px solid #8a6a3f;
+    border-radius:6px;
+    padding:6px 8px;
+    cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease;
+    font-size:.85rem;
+  }
+  .substance:hover{ transform:translateX(3px); box-shadow:2px 2px 6px rgba(0,0,0,.4); }
+  .substance.active{
+    outline:3px solid #e0b050;
+    background:#fff7e0;
+  }
+  .substance .flask{
+    width:26px;height:30px;flex:none;
+  }
+  .substance .label{ line-height:1.15; }
+  .substance .label small{ display:block; color:#5a4a30; font-style:italic; }
+
+  .center-col{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+  }
+  .pot-wrap{
+    position:relative;
+    width:280px;
+    height:260px;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .pot-stand{
+    position:absolute; bottom:0; width:100%; height:14px;
+    background:linear-gradient(180deg,#1a1108,#0e0a05);
+    border-radius:50%;
+    box-shadow:0 6px 14px rgba(0,0,0,.6);
+  }
+  .pot{
+    position:relative;
+    width:220px;
+    height:170px;
+    border-radius:0 0 110px 110px / 0 0 90px 90px;
+    background:linear-gradient(180deg,#5a5a5a,#2b2b2b);
+    border:6px solid #1f1f1f;
+    border-top:none;
+    box-shadow:inset 0 -10px 20px rgba(0,0,0,.5), 0 10px 20px rgba(0,0,0,.5);
+    overflow:hidden;
+    display:flex;
+    align-items:flex-end;
+  }
+  .pot::before{
+    content:"";
+    position:absolute; top:-14px; left:-14px; right:-14px;
+    height:26px;
+    background:linear-gradient(180deg,#7a7a7a,#3a3a3a);
+    border-radius:50%;
+    border:6px solid #1f1f1f;
+  }
+  .liquid{
+    width:100%;
+    height:8%;
+    background:#3a3a3a;
+    transition:height .5s ease, background-color .6s ease;
+  }
+  .liquid::after{
+    content:"";
+    display:block;
+    width:100%; height:100%;
+    background:radial-gradient(ellipse at 30% 20%, rgba(255,255,255,.25), transparent 60%);
+  }
+  .pot-label{
+    font-size:.9rem;
+    text-align:center;
+    color:var(--parchment);
+    min-height:2.6em;
+  }
+  .pot-label b{ color:#f3d38a; }
+
+  .readout{
+    background:var(--parchment);
+    color:var(--ink);
+    border:2px solid var(--brass);
+    border-radius:8px;
+    padding:12px 14px;
+    width:100%;
+    max-width:420px;
+    font-family:Georgia,serif;
+  }
+  .readout h3{ font-size:1rem; margin-bottom:8px; color:#4a3320;}
+  .swatch-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .swatch{
+    width:44px;height:44px;
+    border-radius:6px;
+    border:2px solid #6b4a30;
+    box-shadow:inset 0 0 8px rgba(0,0,0,.25);
+  }
+  .readout .hint{ font-size:.82rem; font-style:italic; color:#6a5a3f;}
+  .readout label{ display:block; font-size:.85rem; margin-top:8px; }
+  .readout input[type=text]{
+    width:100%;
+    padding:5px 7px;
+    border:1px solid #8a6a3f;
+    border-radius:4px;
+    font-family:inherit;
+    font-size:.9rem;
+    margin-top:2px;
+  }
+  .btn-row{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+    flex-wrap:wrap;
+  }
+  button{
+    font-family:Georgia,serif;
+    font-size:.85rem;
+    padding:7px 12px;
+    border-radius:5px;
+    border:1px solid #6b4a30;
+    background:linear-gradient(180deg,#c99a5c,#a97539);
+    color:#2a1c10;
+    cursor:pointer;
+    box-shadow:0 2px 3px rgba(0,0,0,.3);
+  }
+  button:hover{ filter:brightness(1.08); }
+  button.secondary{
+    background:linear-gradient(180deg,#8a8a8a,#5c5c5c);
+    color:#fff;
+  }
+  button:disabled{ opacity:.45; cursor:not-allowed; }
+
+  .solution{
+    margin-top:10px;
+    padding-top:8px;
+    border-top:1px dashed #a5875a;
+    font-size:.85rem;
+    display:none;
+  }
+  .solution.show{ display:block; }
+
+  .indicators{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+  .indicator-card{
+    background:var(--parchment);
+    color:var(--ink);
+    border:2px solid var(--brass);
+    border-radius:8px;
+    padding:8px;
+    text-align:center;
+  }
+  .indicator-card h3{ font-size:.85rem; margin-bottom:4px; color:#4a3320;}
+  .scale{
+    position:relative;
+    height:22px;
+    border-radius:4px;
+    border:1px solid #6b4a30;
+    margin-bottom:4px;
+  }
+  .scale-ticks{
+    display:flex;
+    justify-content:space-between;
+    font-size:.62rem;
+    color:#5a4a30;
+    padding:0 1px;
+    margin-bottom:6px;
+  }
+  .indicator-bottle{
+    cursor:pointer;
+    display:inline-flex;
+    flex-direction:column;
+    align-items:center;
+    padding:6px;
+    border-radius:6px;
+    transition:transform .12s ease;
+  }
+  .indicator-bottle:hover{ transform:scale(1.05); }
+  .indicator-bottle.active{ outline:3px solid #e0b050; background:#fff7e0; }
+  .indicator-bottle svg{ width:38px; height:46px; }
+  .indicator-bottle span{ font-size:.7rem; margin-top:2px; color:#4a3320; }
+
+  .protocol{
+    margin-top:22px;
+    background:var(--parchment);
+    color:var(--ink);
+    border:2px solid var(--brass);
+    border-radius:8px;
+    padding:14px;
+  }
+  .protocol h2{ font-size:1.1rem; margin-bottom:8px; color:#4a3320; }
+  table{ width:100%; border-collapse:collapse; font-size:.85rem; }
+  th,td{ border:1px solid #a5875a; padding:6px 8px; text-align:left; }
+  th{ background:#d8c79f; }
+  .empty-row td{ color:#8a7a5a; font-style:italic; text-align:center; }
+  .swatch-cell{ display:inline-block; width:18px; height:18px; border-radius:3px; border:1px solid #6b4a30; vertical-align:middle; margin-right:6px;}
+</style>
+</head>
+<body>
+<div class="frame">
+  <header>
+    <h1>🧪 Das alte Chemielabor</h1>
+    <p>Wähle links einen Haushaltsstoff aus und gib ihn in den Topf. Tropfe dann rechts einen Indikator hinein und beobachte die Farbe – notiere Farbe und abgelesenen pH-Wert unten im Laborbuch.</p>
+  </header>
+
+  <div class="lab">
+    <!-- LEFT: substances -->
+    <div class="shelf">
+      <h2>Haushaltsstoffe</h2>
+      <div class="bottle-list" id="substanceList"></div>
+    </div>
+
+    <!-- CENTER: pot -->
+    <div class="center-col">
+      <div class="pot-wrap">
+        <div class="pot">
+          <div class="liquid" id="liquid"></div>
+        </div>
+        <div class="pot-stand"></div>
+      </div>
+      <div class="pot-label" id="potLabel"><b>Der Topf ist leer.</b><br>Wähle links einen Stoff aus.</div>
+
+      <div class="readout">
+        <h3>Deine Beobachtung</h3>
+        <div class="swatch-row">
+          <div class="swatch" id="swatch" style="background:#666;"></div>
+          <div class="hint" id="readoutHint">Noch kein Indikator zugegeben.</div>
+        </div>
+        <label>Notierte Farbe:
+          <input type="text" id="colorInput" placeholder="z. B. gelb-grün">
+        </label>
+        <label>Abgelesener pH-Wert:
+          <input type="text" id="phInput" placeholder="z. B. 6">
+        </label>
+        <div class="btn-row">
+          <button id="logBtn" disabled>📖 Ins Laborbuch eintragen</button>
+          <button class="secondary" id="revealBtn" disabled>🔍 Lösung zeigen</button>
+          <button class="secondary" id="resetBtn">🧹 Topf ausleeren</button>
+        </div>
+        <div class="solution" id="solutionBox"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: indicators -->
+    <div class="shelf">
+      <h2>Indikatoren</h2>
+      <div class="indicators" id="indicatorList"></div>
+    </div>
+  </div>
+
+  <div class="protocol">
+    <h2>📖 Laborbuch</h2>
+    <table>
+      <thead>
+        <tr><th>Stoff</th><th>Indikator</th><th>Notierte Farbe</th><th>Abgelesener pH</th></tr>
+      </thead>
+      <tbody id="logBody">
+        <tr class="empty-row"><td colspan="4">Noch keine Einträge – teste einen Stoff und trage ihn ein!</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// ---------- Daten ----------
+const substances = [
+  {id:'zitrone', name:'Zitronensäure (gelöst)', ph:2.2, natural:'#eef2d8'},
+  {id:'essig', name:'Essigreiniger', ph:2.8, natural:'#eef3d0'},
+  {id:'apfelessig', name:'Apfelessig', ph:3.2, natural:'#e8c98a'},
+  {id:'cola', name:'Cola', ph:2.5, natural:'#3b2412'},
+  {id:'kaffee', name:'Kaffee (schwarz)', ph:5.0, natural:'#4a2c14'},
+  {id:'milch', name:'Milch', ph:6.6, natural:'#f5f2ea'},
+  {id:'wasser', name:'Leitungswasser', ph:7.0, natural:'#dbe9ec'},
+  {id:'backpulver', name:'Backpulver-Lösung', ph:8.5, natural:'#eef1ea'},
+  {id:'zahnpasta', name:'Zahnpasta-Lösung', ph:9.0, natural:'#eef7f2'},
+  {id:'allzweck', name:'Allzweckreiniger', ph:9.5, natural:'#cfe8f0'},
+  {id:'seife', name:'Seifenlauge', ph:10.0, natural:'#f0ede2'},
+  {id:'waschmittel', name:'Waschmittellösung', ph:11.0, natural:'#dbe6f0'},
+  {id:'rohrreiniger', name:'Rohrreiniger', ph:13.2, natural:'#f5f0c9'},
+];
+
+function lerp(a,b,t){ return a+(b-a)*t; }
+function mix(c1,c2,t){ return [lerp(c1[0],c2[0],t),lerp(c1[1],c2[1],t),lerp(c1[2],c2[2],t)]; }
+function toHex([r,g,b]){ return '#'+[r,g,b].map(x=>Math.max(0,Math.min(255,Math.round(x))).toString(16).padStart(2,'0')).join(''); }
+function stopColor(stops, ph){
+  ph = Math.max(0, Math.min(14, ph));
+  for(let i=0;i<stops.length-1;i++){
+    const [p1,c1]=stops[i], [p2,c2]=stops[i+1];
+    if(ph>=p1 && ph<=p2){ return toHex(mix(c1,c2,(ph-p1)/(p2-p1))); }
+  }
+  return toHex(stops[stops.length-1][1]);
+}
+function gradientCss(stops){
+  return 'linear-gradient(90deg,' + stops.map(([p,c])=>`${toHex(c)} ${(p/14*100).toFixed(1)}%`).join(',') + ')';
+}
+
+const uniStops = [
+  [0,[120,10,25]],[2,[196,30,30]],[4,[231,110,25]],[6,[240,205,45]],
+  [7,[100,168,60]],[8,[35,140,120]],[10,[35,108,182]],[12,[68,42,140]],[14,[95,20,95]]
+];
+const bromStops = [
+  [0,[222,193,55]],[6,[227,205,60]],[6.8,[128,178,72]],[7.6,[62,145,120]],
+  [8.5,[35,118,182]],[14,[25,95,165]]
+];
+const lackmusStops = [
+  [0,[176,36,38]],[4.5,[176,36,38]],[6.4,[128,72,120]],[8.3,[45,78,165]],[14,[35,65,150]]
+];
+
+const indicators = [
+  {id:'universal', name:'Universalindikator', stops:uniStops},
+  {id:'bromthymol', name:'Bromthymolblau', stops:bromStops},
+  {id:'lackmus', name:'Lackmus', stops:lackmusStops},
+];
+
+// ---------- State ----------
+let currentSubstance = null;
+let currentIndicator = null;
+
+// ---------- Render Substanzen ----------
+const substanceList = document.getElementById('substanceList');
+function flaskSvg(color){
+  return `<svg class="flask" viewBox="0 0 26 30" xmlns="http://www.w3.org/2000/svg">
+    <rect x="10" y="2" width="6" height="8" fill="#cbb98f" stroke="#6b4a30"/>
+    <path d="M9 10 L4 26 Q4 29 8 29 L18 29 Q22 29 22 26 L17 10 Z" fill="${color}" stroke="#3a2b18" stroke-width="1.2"/>
+  </svg>`;
+}
+substances.forEach(s=>{
+  const div = document.createElement('div');
+  div.className='substance';
+  div.dataset.id = s.id;
+  div.innerHTML = `${flaskSvg(s.natural)}<div class="label">${s.name}<small>ins Reagenzglas geben →</small></div>`;
+  div.addEventListener('click', ()=>selectSubstance(s));
+  substanceList.appendChild(div);
+});
+
+function selectSubstance(s){
+  currentSubstance = s;
+  currentIndicator = null;
+  document.querySelectorAll('.substance').forEach(el=>el.classList.toggle('active', el.dataset.id===s.id));
+  document.querySelectorAll('.indicator-bottle').forEach(el=>el.classList.remove('active'));
+  const liquid = document.getElementById('liquid');
+  liquid.style.height='55%';
+  liquid.style.background = s.natural;
+  document.getElementById('potLabel').innerHTML = `Im Topf: <b>${s.name}</b><br>(noch ohne Indikator)`;
+  resetReadout('Wähle jetzt rechts einen Indikator.');
+}
+
+// ---------- Render Indikatoren ----------
+const indicatorList = document.getElementById('indicatorList');
+indicators.forEach(ind=>{
+  const card = document.createElement('div');
+  card.className='indicator-card';
+  card.innerHTML = `
+    <h3>${ind.name}</h3>
+    <div class="scale" style="background:${gradientCss(ind.stops)}"></div>
+    <div class="scale-ticks"><span>0</span><span>2</span><span>4</span><span>6</span><span>7</span><span>8</span><span>10</span><span>12</span><span>14</span></div>
+    <div class="indicator-bottle" data-id="${ind.id}">
+      <svg viewBox="0 0 26 32" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="2" width="6" height="6" fill="#8a6a3f" stroke="#3a2b18"/>
+        <path d="M9 8 L6 27 Q6 30 10 30 L16 30 Q20 30 20 27 L17 8 Z" fill="${stopColor(ind.stops,7)}" stroke="#3a2b18" stroke-width="1.2"/>
+      </svg>
+      <span>Tropfen zugeben</span>
+    </div>
+  `;
+  indicatorList.appendChild(card);
+  card.querySelector('.indicator-bottle').addEventListener('click', ()=>selectIndicator(ind));
+});
+
+function selectIndicator(ind){
+  if(!currentSubstance){
+    resetReadout('Bitte zuerst links einen Stoff in den Topf geben!');
+    return;
+  }
+  currentIndicator = ind;
+  document.querySelectorAll('.indicator-bottle').forEach(el=>el.classList.toggle('active', el.dataset.id===ind.id));
+  const color = stopColor(ind.stops, currentSubstance.ph);
+  const liquid = document.getElementById('liquid');
+  liquid.style.background = color;
+  liquid.style.height='70%';
+  document.getElementById('potLabel').innerHTML =
+    `Im Topf: <b>${currentSubstance.name}</b><br>+ ein paar Tropfen <b>${ind.name}</b>`;
+  document.getElementById('swatch').style.background = color;
+  document.getElementById('readoutHint').textContent = 'Beobachte die Farbe im Topf und trage sie unten ein.';
+  document.getElementById('logBtn').disabled=false;
+  document.getElementById('revealBtn').disabled=false;
+  document.getElementById('colorInput').value='';
+  document.getElementById('phInput').value='';
+  const box=document.getElementById('solutionBox');
+  box.classList.remove('show');
+  box.innerHTML='';
+}
+
+function resetReadout(hintText){
+  document.getElementById('swatch').style.background='#666';
+  document.getElementById('readoutHint').textContent = hintText;
+  document.getElementById('logBtn').disabled=true;
+  document.getElementById('revealBtn').disabled=true;
+  const box=document.getElementById('solutionBox');
+  box.classList.remove('show');
+  box.innerHTML='';
+}
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  currentSubstance=null; currentIndicator=null;
+  document.querySelectorAll('.substance').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.indicator-bottle').forEach(el=>el.classList.remove('active'));
+  const liquid=document.getElementById('liquid');
+  liquid.style.height='8%'; liquid.style.background='#3a3a3a';
+  document.getElementById('potLabel').innerHTML = '<b>Der Topf ist leer.</b><br>Wähle links einen Stoff aus.';
+  resetReadout('Noch kein Indikator zugegeben.');
+});
+
+document.getElementById('revealBtn').addEventListener('click', ()=>{
+  if(!currentSubstance || !currentIndicator) return;
+  const box=document.getElementById('solutionBox');
+  const color = stopColor(currentIndicator.stops, currentSubstance.ph);
+  box.innerHTML = `<span class="swatch-cell" style="background:${color}"></span>
+    <b>${currentSubstance.name}</b> hat einen ungefähren pH-Wert von <b>${currentSubstance.ph}</b>.
+    Mit ${currentIndicator.name} färbt sich die Lösung entsprechend der Skala.`;
+  box.classList.add('show');
+});
+
+// ---------- Laborbuch ----------
+const logBody = document.getElementById('logBody');
+document.getElementById('logBtn').addEventListener('click', ()=>{
+  if(!currentSubstance || !currentIndicator) return;
+  const colorTxt = document.getElementById('colorInput').value.trim() || '(keine Angabe)';
+  const phTxt = document.getElementById('phInput').value.trim() || '(keine Angabe)';
+  const emptyRow = logBody.querySelector('.empty-row');
+  if(emptyRow) emptyRow.remove();
+  const color = stopColor(currentIndicator.stops, currentSubstance.ph);
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${currentSubstance.name}</td><td>${currentIndicator.name}</td>
+    <td><span class="swatch-cell" style="background:${color}"></span>${colorTxt}</td><td>${phTxt}</td>`;
+  logBody.appendChild(tr);
+});
+</script>
+</body>
+</html>
 
