@@ -370,17 +370,15 @@
 <script>
 // ---------- Daten ----------
 const substances = [
-  {id:'zitrone', name:'Zitronensäure (gelöst)', ph:2.2, natural:'#eef2d8'},
-  {id:'essig', name:'Essigreiniger', ph:2.8, natural:'#eef3d0'},
-  {id:'apfelessig', name:'Apfelessig', ph:3.2, natural:'#e8c98a'},
+  {id:'zitrone', name:'Zitronensaft', ph:2.2, natural:'#eef2d8'},
+  {id:'essig', name:'Essig', ph:2.8, natural:'#eef3d0'},
   {id:'cola', name:'Cola', ph:2.5, natural:'#3b2412'},
   {id:'kaffee', name:'Kaffee (schwarz)', ph:5.0, natural:'#4a2c14'},
   {id:'milch', name:'Milch', ph:6.6, natural:'#f5f2ea'},
-  {id:'wasser', name:'Leitungswasser', ph:7.0, natural:'#dbe9ec'},
-  {id:'backpulver', name:'Backpulver-Lösung', ph:8.5, natural:'#eef1ea'},
+  {id:'wasser', name:'Wasser', ph:7.0, natural:'#dbe9ec'},
   {id:'zahnpasta', name:'Zahnpasta-Lösung', ph:9.0, natural:'#eef7f2'},
   {id:'allzweck', name:'Allzweckreiniger', ph:9.5, natural:'#cfe8f0'},
-  {id:'seife', name:'Seifenlauge', ph:10.0, natural:'#f0ede2'},
+  {id:'seife', name:'Seifenlösung', ph:10.0, natural:'#f0ede2'},
   {id:'waschmittel', name:'Waschmittellösung', ph:11.0, natural:'#dbe6f0'},
   {id:'rohrreiniger', name:'Rohrreiniger', ph:13.2, natural:'#f5f0c9'},
 ];
@@ -411,11 +409,15 @@ const bromStops = [
 const lackmusStops = [
   [0,[176,36,38]],[4.5,[176,36,38]],[6.4,[128,72,120]],[8.3,[45,78,165]],[14,[35,65,150]]
 ];
+const phenolStops = [
+  [0,[240,236,228]],[8.2,[240,236,228]],[8.6,[224,90,168]],[10,[224,20,140]],[14,[200,10,120]]
+];
 
 const indicators = [
-  {id:'universal', name:'Universalindikator', stops:uniStops},
-  {id:'bromthymol', name:'Bromthymolblau', stops:bromStops},
   {id:'lackmus', name:'Lackmus', stops:lackmusStops},
+  {id:'phenolphthalein', name:'Phenolphthalein', stops:phenolStops},
+  {id:'bromthymol', name:'Bromthymolblau', stops:bromStops},
+  {id:'universal', name:'Universalindikator', stops:uniStops},
 ];
 
 // ---------- State ----------
@@ -543,4 +545,3 @@ document.getElementById('logBtn').addEventListener('click', ()=>{
 </script>
 </body>
 </html>
-
