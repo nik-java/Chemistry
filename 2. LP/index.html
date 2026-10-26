@@ -25,6 +25,7 @@ button{font:inherit;font-weight:700;border:0;border-radius:6px;padding:12px 18px
 button:disabled{opacity:.5;cursor:default}
 button.alt{background:transparent;color:var(--ink);border:2px solid var(--line)}
 button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.ar{border:0;padding:0;margin:0 0 18px}.ar legend{font-weight:700;padding:0}.ar label{display:inline-flex;align-items:center;gap:6px;margin:6px 14px 0 0}
 .btns{display:flex;gap:8px;flex-wrap:wrap}
 .live{font-variant-numeric:tabular-nums;color:var(--mute);margin:12px 0 0}
 svg{width:100%;height:auto;max-height:560px;display:block}
@@ -46,6 +47,7 @@ td,th{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left;font-s
 <div class="ctl"><label for="w">Wasser <output id="wo"></output></label><input id="w" type="range" min="200" max="500" step="10" value="400"><small>Menge in der 500-ml-Flasche</small></div>
 <div class="ctl"><label for="s">Zucker <output id="so"></output></label><input id="s" type="range" min="0" max="80" step="1" value="36"><small>Gesamtmenge in Gramm</small></div>
 <div class="ctl"><label for="c">CO₂-Gehalt <output id="co"></output></label><input id="c" type="range" min="0" max="10" step="0.5" value="5"><small>Gramm CO₂ pro Liter Flüssigkeit</small></div>
+<fieldset class="ar" id="aro"><legend>Aroma</legend><label><input type="radio" name="ar" value="none" checked> Kein Aroma</label><label><input type="radio" name="ar" value="orange"> Orange</label><label><input type="radio" name="ar" value="zitrone"> Zitrone</label><label><input type="radio" name="ar" value="cola"> Cola</label></fieldset>
 <p class="live" id="live"></p>
 <div class="btns"><button id="go">Anlage starten</button><button id="reset" class="alt" disabled>Neu einstellen</button></div>
 </section>
@@ -84,7 +86,7 @@ td,th{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left;font-s
 <h2 id="rname"></h2>
 <p id="rtext"></p>
 <table><tbody id="rtab"></tbody></table>
-<p class="live" style="margin-top:10px">Vereinfachte Einordnung für den Unterricht. Echte Rezepturen enthalten zusätzlich Fruchtsaft, Säuerungsmittel und Aromen.</p>
+
 </div>
 </section>
 </div>
@@ -105,8 +107,7 @@ function upd(){var v=vals();
 function setLevel(f,sugar,foamH){var h=(BOT-TOPMAX)*f;liq.setAttribute('y',BOT-h);liq.setAttribute('height',h);
  liq.setAttribute('fill',colour(sugar));foam.setAttribute('y',BOT-h-foamH);foam.setAttribute('height',foamH);
  $('mlLabel').textContent='';}
-function colour(k){ // k 0..1: Wasserblau -> Orange
- var a=[79,168,216],b=[243,160,32];var t=Math.max(0,Math.min(1,k));
+function colour(k){var ar=aroma();var a=[79,168,216],b=TG[ar];var t=ar==='none'?k*.35:.45+.55*k;t=Math.max(0,Math.min(1,t));
  return 'rgb('+a.map(function(x,i){return Math.round(x+(b[i]-x)*t)}).join(',')+')';}
 function el(n,at){var e=document.createElementNS(NS,n);for(var k in at)e.setAttribute(k,at[k]);return e}
 function wait(ms){return new Promise(function(r){setTimeout(r,ms)})}
@@ -117,7 +118,7 @@ function T(ms){return reduce?Math.min(ms,300):ms}
 
 async function run(){
  var v=vals(),f=v.w/500,k=Math.min(1,sp(v)/12);
- running=true;go.disabled=true;reset.disabled=true;[w,s,c].forEach(function(x){x.disabled=true});
+ running=true;$('aro').disabled=true;go.disabled=true;reset.disabled=true;[w,s,c].forEach(function(x){x.disabled=true});
  $('result').style.display='none';bub.innerHTML='';cubes.innerHTML='';setLevel(0,0,0);cap.setAttribute('opacity',0);
  // 1 Wasser
  st.textContent='1. Wasser wird eingefüllt …';flow.setAttribute('opacity',1);
@@ -147,7 +148,26 @@ async function run(){
  finish(v);
 }
 
-function classify(v){var z=sp(v),c=v.c;
+var TG={none:[235,215,160],orange:[243,140,20],zitrone:[232,226,110],cola:[60,30,15]};
+function aroma(){var r=document.querySelector('input[name=ar]:checked');return r?r.value:'none'}
+function aromaName(){return {none:'kein Aroma',orange:'Orange',zitrone:'Zitrone',cola:'Cola'}[aroma()]}
+function aromaClass(v,a){var z=sp(v),c=v.c;
+ if(a==='none'||c>8.5||z<1||z>14)return null;
+ if(a==='orange'){
+  if(z<5)return{n:'Orangenschorle',d:'Orangenaroma, aber wenig Zucker: leicht und erfrischend.'};
+  if(z<8)return{n:'Milde Orangenlimo',d:'Orangenaroma mit mittlerer Süße.'};
+  if(z<10.5)return c>=4?{n:'Fanta-Typ',d:'Orangenaroma, süß und mit deutlichem Sprudel: so liegt eine typische Orangenlimo.'}:{n:'Sinalco-Typ',d:'Orangenaroma, süß, aber mit sanftem Sprudel: eine milde, klassische Limonade.'};
+  return{n:'Sehr süße Orangenlimo',d:'Orangenaroma mit sehr viel Zucker, fast schon klebrig.'};}
+ if(a==='zitrone'){
+  if(z<5)return{n:'Zitronenschorle',d:'Zitronenaroma, wenig Zucker: leicht und herb.'};
+  if(z<8)return c>=4?{n:'Sprite-Typ',d:'Zitronenaroma, mittlere Süße und kräftiges Prickeln: wie eine klare Zitronenlimonade.'}:{n:'Milde Zitronenlimo',d:'Zitronenaroma mit mittlerer Süße, aber nur sanftem Sprudel.'};
+  if(z<10.5)return{n:'Süße Zitronenlimo',d:'Zitronenaroma mit viel Zucker, deutlich süßer als eine klassische Zitronenlimo.'};
+  return{n:'Sehr süße Zitronenlimo',d:'Zitronenaroma mit sehr viel Zucker.'};}
+ if(z<7)return{n:'Dünne Cola',d:'Cola-Aroma, aber zu wenig Zucker: schmeckt wässrig.'};
+ if(c<3)return{n:'Flache Cola',d:'Zu wenig CO₂: Die Cola schmeckt abgestanden.'};
+ return z<10.8?{n:'Coca-Cola-Typ',d:'Cola-Aroma, kräftig gesüßt und mit viel Sprudel.'}:{n:'Pepsi-Typ',d:'Cola-Aroma und noch etwas süßer als beim Coca-Cola-Typ.'};}
+function classify(v){var r=aromaClass(v,aroma());return r||classifyBase(v)}
+function classifyBase(v){var z=sp(v),c=v.c;
  if(v.c>8.5&&z>1)return{n:'Überschäumer',d:'Zu viel CO₂: Die Flasche würde beim Öffnen überschäumen. Echte Limos haben meist 4 bis 6 g CO₂ pro Liter.'};
  if(z<1)return{n:c<1.5?'Stilles Wasser':'Sprudelwasser',d:c<1.5?'Kaum Zucker, kaum CO₂ – das ist einfach Wasser.':'Fast kein Zucker: Das ist Mineralwasser mit Kohlensäure.'};
  if(z>14)return{n:'Zuckersirup',d:'Viel zu süß und zu zäh. Das ist ein Sirup, den man erst verdünnen müsste.'};
@@ -162,18 +182,18 @@ function finish(v){var r=classify(v),z=sp(v);
  st.textContent='Fertig! Deine Limo ist abgefüllt.';
  $('rname').textContent=r.n;$('rtext').textContent=r.d;
  var zucker=(v.s/(v.w/1000)).toFixed(0);
- $('rtab').innerHTML='<tr><th>Wasser</th><td>'+v.w+' ml</td></tr><tr><th>Zucker</th><td>'+v.s+' g ('+z.toFixed(1).replace('.',',')+' g pro 100 ml, '+zucker+' g pro Liter)</td></tr><tr><th>CO₂</th><td>'+v.c.toString().replace('.',',')+' g pro Liter</td></tr>';
+ $('rtab').innerHTML='<tr><th>Wasser</th><td>'+v.w+' ml</td></tr><tr><th>Zucker</th><td>'+v.s+' g ('+z.toFixed(1).replace('.',',')+' g pro 100 ml, '+zucker+' g pro Liter)</td></tr><tr><th>Aroma</th><td>'+aromaName()+'</td></tr><tr><th>CO₂</th><td>'+v.c.toString().replace('.',',')+' g pro Liter</td></tr>';
  $('result').style.display='block';$('result').scrollIntoView({behavior:reduce?'auto':'smooth',block:'nearest'});
  running=false;reset.disabled=false}
 
 go.addEventListener('click',run);
 reset.addEventListener('click',function(){running=false;cancelAnimationFrame(raf);[w,s,c].forEach(function(x){x.disabled=false});
  bub.innerHTML='';cubes.innerHTML='';cap.setAttribute('opacity',0);tankW.setAttribute('y',24);tankW.setAttribute('height',102);
- $('result').style.display='none';go.disabled=false;reset.disabled=true;st.textContent='Bereit. Stelle die Rezeptur ein.';upd()});
+ $('result').style.display='none';$('aro').disabled=false;go.disabled=false;reset.disabled=true;st.textContent='Bereit. Stelle die Rezeptur ein.';upd()});
 [w,s,c].forEach(function(x){x.addEventListener('input',upd)});
+document.querySelectorAll('input[name=ar]').forEach(function(x){x.addEventListener('change',upd)});
 upd();
 })();
 </script>
 </body>
 </html>
-
