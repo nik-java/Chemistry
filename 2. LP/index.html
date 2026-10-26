@@ -1,1 +1,179 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Limo-Abfüllanlage</title>
+<style>
+:root{--bg:#eaf3f4;--panel:#fff;--ink:#12303a;--mute:#4d6a73;--line:#b9d2d6;--accent:#e8870e;--water:#4fa8d8;--ok:#1f8a5b;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e2229;--panel:#16323b;--ink:#e6f2f4;--mute:#9db9bf;--line:#2c515b;color-scheme:dark}}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Segoe UI",Verdana,sans-serif;line-height:1.5}
+main{max-width:980px;margin:0 auto;padding:16px}
+h1{font-size:1.7rem;margin:.2em 0 .1em}
+.sub{color:var(--mute);margin:0 0 16px;max-width:60ch}
+.grid{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:16px}
+@media (max-width:760px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:2px solid var(--line);border-radius:10px;padding:16px}
+.ctl{margin-bottom:18px}
+.ctl label{display:flex;justify-content:space-between;font-weight:700}
+.ctl output{color:var(--accent);font-variant-numeric:tabular-nums}
+.ctl small{color:var(--mute);display:block}
+input[type=range]{width:100%;accent-color:var(--accent)}
+button{font:inherit;font-weight:700;border:0;border-radius:6px;padding:12px 18px;cursor:pointer;background:var(--accent);color:#1b1100}
+button:disabled{opacity:.5;cursor:default}
+button.alt{background:transparent;color:var(--ink);border:2px solid var(--line)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.live{font-variant-numeric:tabular-nums;color:var(--mute);margin:12px 0 0}
+svg{width:100%;height:auto;max-height:560px;display:block}
+.status{font-weight:700;min-height:1.6em;margin:0 0 6px}
+#result{display:none;margin-top:16px;border-left:8px solid var(--accent)}
+#result h2{margin:0 0 4px;font-size:1.5rem}
+#result p{margin:.3em 0}
+table{border-collapse:collapse;width:100%;margin-top:8px}
+td,th{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left;font-size:.92rem}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<main>
+<h1>Limo-Abfüllanlage</h1>
+<p class="sub">Stelle die Rezeptur ein wie in einer Fabrik: Wasser, Zucker und Kohlenstoffdioxid (CO₂). Starte die Anlage und schau zu. Am Ende bekommt deine Limo einen Namen.</p>
+<div class="grid">
+<section class="panel" aria-label="Steuerung">
+<div class="ctl"><label for="w">Wasser <output id="wo"></output></label><input id="w" type="range" min="200" max="500" step="10" value="400"><small>Menge in der 500-ml-Flasche</small></div>
+<div class="ctl"><label for="s">Zucker <output id="so"></output></label><input id="s" type="range" min="0" max="80" step="1" value="36"><small>Gesamtmenge in Gramm</small></div>
+<div class="ctl"><label for="c">CO₂-Gehalt <output id="co"></output></label><input id="c" type="range" min="0" max="10" step="0.5" value="5"><small>Gramm CO₂ pro Liter Flüssigkeit</small></div>
+<p class="live" id="live"></p>
+<div class="btns"><button id="go">Anlage starten</button><button id="reset" class="alt" disabled>Neu einstellen</button></div>
+</section>
+<section>
+<div class="panel">
+<p class="status" id="status" role="status" aria-live="polite">Bereit. Stelle die Rezeptur ein.</p>
+<svg id="plant" viewBox="0 0 600 520" role="img" aria-label="Abfüllanlage mit Flasche, Wassertank, Zuckerbehälter und CO₂-Flasche">
+<defs><clipPath id="clip"><path d="M255 150 h90 v20 q0 25 20 60 q20 35 20 70 v150 q0 20 -20 20 h-110 q-20 0 -20 -20 v-150 q0 -35 20 -70 q20 -35 20 -60z"/></clipPath></defs>
+<!-- Wassertank -->
+<rect x="30" y="20" width="120" height="110" rx="8" fill="#cfe6f0" stroke="#4d6a73" stroke-width="3"/>
+<rect id="tankW" x="34" y="24" width="112" height="102" rx="5" fill="#4fa8d8"/>
+<text x="90" y="80" text-anchor="middle" font-size="18" font-weight="700" fill="#06263a">Wasser</text>
+<path id="pipeW" d="M150 100 H300 V150" fill="none" stroke="#4d6a73" stroke-width="10"/>
+<path id="flowW" d="M150 100 H300 V200" fill="none" stroke="#4fa8d8" stroke-width="5" opacity="0" stroke-dasharray="8 6"/>
+<!-- Zucker -->
+<g><rect x="460" y="20" width="110" height="90" rx="8" fill="#f1e7d2" stroke="#4d6a73" stroke-width="3"/>
+<text x="515" y="72" text-anchor="middle" font-size="18" font-weight="700" fill="#4a3205">Zucker</text></g>
+<path d="M515 110 V130 H330 V150" fill="none" stroke="#4d6a73" stroke-width="10"/>
+<g id="sugarCubes"></g>
+<!-- CO2 -->
+<g><rect x="470" y="330" width="60" height="150" rx="26" fill="#7d93a0" stroke="#4d6a73" stroke-width="3"/>
+<rect x="488" y="312" width="24" height="22" fill="#4d6a73"/>
+<text x="500" y="410" text-anchor="middle" font-size="20" font-weight="700" fill="#fff">CO₂</text></g>
+<path d="M500 480 V500 H300 V470" fill="none" stroke="#4d6a73" stroke-width="10"/>
+<!-- Flasche -->
+<g clip-path="url(#clip)"><rect x="200" y="140" width="200" height="360" fill="#e3eff1" opacity=".55"/>
+<rect id="liq" x="200" y="490" width="200" height="0" fill="#4fa8d8"/>
+<rect id="foam" x="200" y="490" width="200" height="0" fill="#fff" opacity=".85"/>
+<g id="bubbles"></g></g>
+<path d="M255 150 h90 v20 q0 25 20 60 q20 35 20 70 v150 q0 20 -20 20 h-110 q-20 0 -20 -20 v-150 q0 -35 20 -70 q20 -35 20 -60z" fill="none" stroke="#12303a" stroke-width="5"/>
+<rect id="cap" x="250" y="132" width="100" height="18" rx="4" fill="#c0392b" opacity="0" />
+<text id="mlLabel" x="300" y="510" text-anchor="middle" font-size="14" fill="#4d6a73"></text>
+</svg>
+</div>
+<div class="panel" id="result" aria-live="polite">
+<h2 id="rname"></h2>
+<p id="rtext"></p>
+<table><tbody id="rtab"></tbody></table>
+<p class="live" style="margin-top:10px">Vereinfachte Einordnung für den Unterricht. Echte Rezepturen enthalten zusätzlich Fruchtsaft, Säuerungsmittel und Aromen.</p>
+</div>
+</section>
+</div>
+</main>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+var w=$('w'),s=$('s'),c=$('c'),go=$('go'),reset=$('reset'),st=$('status');
+var liq=$('liq'),foam=$('foam'),bub=$('bubbles'),cubes=$('sugarCubes'),flow=$('flowW'),cap=$('cap'),tankW=$('tankW');
+var NS='http://www.w3.org/2000/svg',BOT=490,TOPMAX=170; // Flaschenboden y, max Füllhöhe 500 ml
+var running=false,raf=0,state={};
+function vals(){return {w:+w.value,s:+s.value,c:+c.value}}
+function sp(v){return v.s/v.w*100}              // g Zucker pro 100 ml
+function upd(){var v=vals();
+ $('wo').textContent=v.w+' ml';$('so').textContent=v.s+' g';$('co').textContent=v.c.toString().replace('.',',')+' g/L';
+ $('live').textContent='Zuckergehalt: '+sp(v).toFixed(1).replace('.',',')+' g pro 100 ml';
+ setLevel(v.w/500,0,0);}
+function setLevel(f,sugar,foamH){var h=(BOT-TOPMAX)*f;liq.setAttribute('y',BOT-h);liq.setAttribute('height',h);
+ liq.setAttribute('fill',colour(sugar));foam.setAttribute('y',BOT-h-foamH);foam.setAttribute('height',foamH);
+ $('mlLabel').textContent='';}
+function colour(k){ // k 0..1: Wasserblau -> Orange
+ var a=[79,168,216],b=[243,160,32];var t=Math.max(0,Math.min(1,k));
+ return 'rgb('+a.map(function(x,i){return Math.round(x+(b[i]-x)*t)}).join(',')+')';}
+function el(n,at){var e=document.createElementNS(NS,n);for(var k in at)e.setAttribute(k,at[k]);return e}
+function wait(ms){return new Promise(function(r){setTimeout(r,ms)})}
+function anim(ms,fn){return new Promise(function(res){var t0=performance.now();
+ (function f(t){if(!running){res();return}var p=Math.min(1,(t-t0)/ms);fn(p);if(p<1)raf=requestAnimationFrame(f);else res()})(t0)})}
+var reduce=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+function T(ms){return reduce?Math.min(ms,300):ms}
+
+async function run(){
+ var v=vals(),f=v.w/500,k=Math.min(1,sp(v)/12);
+ running=true;go.disabled=true;reset.disabled=true;[w,s,c].forEach(function(x){x.disabled=true});
+ $('result').style.display='none';bub.innerHTML='';cubes.innerHTML='';setLevel(0,0,0);cap.setAttribute('opacity',0);
+ // 1 Wasser
+ st.textContent='1. Wasser wird eingefüllt …';flow.setAttribute('opacity',1);
+ var off=0;
+ await anim(T(2600),function(p){setLevel(f*p,0,0);tankW.setAttribute('y',24+102*p*f*.8);tankW.setAttribute('height',102-102*p*f*.8);off-=2;flow.setAttribute('stroke-dashoffset',off)});
+ flow.setAttribute('opacity',0);if(!running)return;
+ // 2 Zucker
+ st.textContent='2. Zucker wird zugegeben und löst sich auf …';
+ var n=Math.max(1,Math.round(v.s/4));
+ for(var i=0;i<n&&running;i++){var q=el('rect',{x:322,y:130,width:12,height:12,rx:2,fill:'#fff',stroke:'#999'});cubes.appendChild(q);
+  (function(q){var t0=performance.now();(function d(t){var p=Math.min(1,(t-t0)/500);q.setAttribute('y',130+(BOT-(BOT-TOPMAX)*f-130)*p);q.setAttribute('opacity',1-p*p);if(p<1)requestAnimationFrame(d);else q.remove()})(t0)})(q);
+  await wait(reduce?10:Math.max(30,1600/n));}
+ await anim(T(900),function(p){setLevel(f,k*p,0)});if(!running)return;
+ // 3 CO2
+ st.textContent='3. CO₂ wird unter Druck eingeleitet – es sprudelt!';
+ var top=BOT-(BOT-TOPMAX)*f,cnt=Math.round(v.c*7),bs=[];
+ for(var j=0;j<cnt;j++){var b=el('circle',{r:2+Math.random()*3.5,cx:215+Math.random()*170,cy:BOT,fill:'#fff',opacity:.8});bub.appendChild(b);bs.push({e:b,y:BOT-Math.random()*(BOT-top),sp:.8+Math.random()*1.8,x:+b.getAttribute('cx')})}
+ var foamTarget=Math.min(70,Math.max(0,(v.c-3)*11));
+ await new Promise(function(res){var t0=performance.now(),D=T(4200);(function fr(t){if(!running){res();return}var p=Math.min(1,(t-t0)/D);
+  bs.forEach(function(o){o.y-=o.sp;if(o.y<top)o.y=BOT;o.x+=Math.sin(o.y/9)*.4;o.e.setAttribute('cy',o.y);o.e.setAttribute('cx',o.x)});
+  setLevel(f,k,foamTarget*p);if(p<1)raf=requestAnimationFrame(fr);else res()})(t0)});
+ if(!running)return;
+ // 4 Verschließen
+ st.textContent='4. Flasche wird verschlossen …';
+ cap.setAttribute('opacity',1);await anim(T(700),function(p){cap.setAttribute('y',100+32*p)});
+ await wait(T(400));if(!running)return;
+ finish(v);
+}
+
+function classify(v){var z=sp(v),c=v.c;
+ if(v.c>8.5&&z>1)return{n:'Überschäumer',d:'Zu viel CO₂: Die Flasche würde beim Öffnen überschäumen. Echte Limos haben meist 4 bis 6 g CO₂ pro Liter.'};
+ if(z<1)return{n:c<1.5?'Stilles Wasser':'Sprudelwasser',d:c<1.5?'Kaum Zucker, kaum CO₂ – das ist einfach Wasser.':'Fast kein Zucker: Das ist Mineralwasser mit Kohlensäure.'};
+ if(z>14)return{n:'Zuckersirup',d:'Viel zu süß und zu zäh. Das ist ein Sirup, den man erst verdünnen müsste.'};
+ if(z<5)return{n:c>=4?'Schorle-Typ':'Leichte Limo',d:'Wenig Zucker: erfrischend, aber nur schwach süß.'};
+ if(z<8)return{n:c>=5?'Sprite-Typ':'Zitronenlimo mild',d:'Mittlere Süße und eher kräftiges Prickeln, wie bei einer klaren Zitronenlimonade.'};
+ if(z<10.5){ if(c>=4)return{n:'Fanta-Typ',d:'Süß und fruchtig mit deutlichem Sprudel – so liegt eine typische Orangenlimo.'};
+  return{n:'Sinalco-Typ',d:'Süß, aber mit sanftem Sprudel: eine milde, klassische Limonade.'};}
+ if(z<=14)return{n:c>=4?'Cola-Typ':'Süße Brause',d:'Sehr süß. Mit kräftigem Sprudel liegst du im Bereich der Cola-Getränke.'};
+ return{n:'Eigene Kreation',d:''}}
+
+function finish(v){var r=classify(v),z=sp(v);
+ st.textContent='Fertig! Deine Limo ist abgefüllt.';
+ $('rname').textContent=r.n;$('rtext').textContent=r.d;
+ var zucker=(v.s/(v.w/1000)).toFixed(0);
+ $('rtab').innerHTML='<tr><th>Wasser</th><td>'+v.w+' ml</td></tr><tr><th>Zucker</th><td>'+v.s+' g ('+z.toFixed(1).replace('.',',')+' g pro 100 ml, '+zucker+' g pro Liter)</td></tr><tr><th>CO₂</th><td>'+v.c.toString().replace('.',',')+' g pro Liter</td></tr>';
+ $('result').style.display='block';$('result').scrollIntoView({behavior:reduce?'auto':'smooth',block:'nearest'});
+ running=false;reset.disabled=false}
+
+go.addEventListener('click',run);
+reset.addEventListener('click',function(){running=false;cancelAnimationFrame(raf);[w,s,c].forEach(function(x){x.disabled=false});
+ bub.innerHTML='';cubes.innerHTML='';cap.setAttribute('opacity',0);tankW.setAttribute('y',24);tankW.setAttribute('height',102);
+ $('result').style.display='none';go.disabled=false;reset.disabled=true;st.textContent='Bereit. Stelle die Rezeptur ein.';upd()});
+[w,s,c].forEach(function(x){x.addEventListener('input',upd)});
+upd();
+})();
+</script>
+</body>
+</html>
 
